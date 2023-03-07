@@ -16,7 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = ["erddapy",]
+dependencies = ["erddapy", "pandas"]
 
 [project.urls]
 "Homepage" = "https://github.com/bio-oracle/bio-oracle-py"
