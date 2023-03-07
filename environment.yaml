@@ -1,0 +1,5 @@
+name: bio-oracle
+channels:
+  - conda-forge
+dependencies:
+  - erddapy
