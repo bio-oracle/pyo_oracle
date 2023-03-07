@@ -12,7 +12,7 @@ _default_config = {
 
 config_file = Path(__file__).absolute().parent.parent.joinpath(("config.ini"))
 
-def create_config(default_config: dict = _default_config, path: str = None):
+def create_config(default_config: dict = _default_config, path: str = None) -> None:
     """
     Creates the configuration file.
     """
@@ -28,7 +28,7 @@ def create_config(default_config: dict = _default_config, path: str = None):
         print(f"Created configuration at '{config_file}'.")
 
 
-def _get_default_config():
+def _get_default_config() -> configparser.ConfigParser:
     if config_file.exists():
         current_config = configparser.ConfigParser()
         _ = current_config.read(config_file)
@@ -38,13 +38,14 @@ def _get_default_config():
             print("Config file doesn't exist, creating it.")
             create_config()
             return _get_default_config()
-        except:
+        except Exception as e:
+            print(f"Error: could not load or create configuration file. Loading default values.")
             config = configparser.ConfigParser()
             config["DEFAULT"] = _default_config
             return config
 
 
-def show_config_path():
+def get_config_path() -> Path:
     """
     Returns the path to the config file.
     """
@@ -53,10 +54,11 @@ def show_config_path():
     else:
         print("Config file doesn't exist, creating it.")
         create_config()
+        get_config_path()
     
 
 
-def show_config_values():
+def print_config_values() -> None:
     """
     Prints configuration values.
     """
@@ -70,7 +72,7 @@ def show_config_values():
     print(f"Edit the configuration file '{config_file}' or use the 'update_setting' function in this module to edit them.")
 
 
-def update_setting(key, value):
+def update_setting(key, value) -> None:
     """
     Modifies a setting in the configuration file.
     """
