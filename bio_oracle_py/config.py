@@ -79,3 +79,6 @@ def update_setting(key, value):
     with open(config_file, "w") as f:
         config.write(f)
     print(f"Successfully updated config file at '{config_file}'.")
+
+
+config = dict(_get_default_config()["DEFAULT"])
