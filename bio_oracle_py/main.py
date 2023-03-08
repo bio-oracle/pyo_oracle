@@ -57,7 +57,6 @@ def _get_griddap_dataset_url(
     constraints=None,
     response="nc",
     _print=False,
-
 ):
     printer = lambda message: print(message) if _print else None
 
@@ -87,6 +86,11 @@ def _get_griddap_dataset_url(
 
 @lru_cache(2)
 def _layer_dataframe(include_allDatasets=False):
+    """
+    Requests the list of layers as a pandas DataFrame.
+    
+        include_allDatasets (bool): whether to include the row with the 'allDatasets' dataset.
+    """
     s = deepcopy(default_server)
     s.dataset_id = "allDatasets"
     s.protocol = "tabledap"
@@ -98,6 +102,7 @@ def _layer_dataframe(include_allDatasets=False):
 
 
 def _validate_argument(name: str, value: str or list, valid_values: list):
+    """Check if argument is in a valid list of values."""
     if value:
         if isinstance(value, str):
             value = [value,]
