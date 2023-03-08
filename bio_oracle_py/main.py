@@ -17,16 +17,16 @@ default_server = ERDDAP(
 )
 
 
-def download_layers(dataset_id: str or list, response: str = "nc"):
+def download_layers(dataset_ids: str or list, response: str = "nc", constraints: dict = None):
     """
     Downloads one or more layers.
     """
-    if isinstance(dataset_id, str):
-        dataset_id = [dataset_id,]
+    if isinstance(dataset_ids, str):
+        dataset_ids = [dataset_ids,]
 
     s = deepcopy(default_server)
-    for dataset in dataset_id:
-        url = _get_griddap_dataset_url(dataset, response=response)
+    for dataset_id in dataset_ids:
+        url = _get_griddap_dataset_url(dataset_id, response=response, constraints=constraints, response=response)
         filename = f"{dataset_id}.{response}"
         local_path = Path(config["data_directory"]).joinpath(filename)
         _download_file_from_url(url, local_path)
@@ -70,9 +70,11 @@ def _get_griddap_dataset_url(
 
     # Setting constraints that match
     if constraints:
+        constraints = {**server._constraints_original, **constraints}
         for k, v in constraints.items():
             if k in server.constraints.keys():
                 server.constraints[k] = v
+                server._constraints_original[k] = v
 
     # The same for variables
     if variables:
