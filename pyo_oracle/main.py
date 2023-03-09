@@ -9,7 +9,7 @@ import httpx
 import pandas as pd
 from erddapy import ERDDAP
 
-from bio_oracle_py.config import config
+from pyo_oracle.config import config
 
 
 default_server = ERDDAP(

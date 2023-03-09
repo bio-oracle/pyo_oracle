@@ -3,10 +3,10 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["bio_oracle_py"]
+packages = ["pyo_oracle"]
 
 [project]
-name = "bio_oracle_py"
+name = "pyo_oracle"
 version = "0.0.1"
 authors = [
   { name="Vini Salazar", email="vinicius.salazar@unimelb.edu.au" },
@@ -22,4 +22,4 @@ classifiers = [
 dependencies = ["erddapy", "pandas"]
 
 [project.urls]
-"Homepage" = "https://github.com/bio-oracle/bio-oracle-py"
+"Homepage" = "https://github.com/bio-oracle/pyo_oracle"
