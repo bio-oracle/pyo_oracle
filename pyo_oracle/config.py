@@ -10,7 +10,7 @@ _default_config = {
     "erddap_server": "http://erddap.bio-oracle.org:8080/erddap/"
 }
 
-config_file = Path(__file__).absolute().parent.parent.joinpath(("config.ini"))
+config_file = Path(__file__).absolute().parent.joinpath(("config.ini"))
 
 def create_config(default_config: dict = _default_config, path: str = None) -> None:
     """
