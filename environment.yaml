@@ -4,3 +4,4 @@ channels:
 dependencies:
   - erddapy
   - pandas
+  - pytest
