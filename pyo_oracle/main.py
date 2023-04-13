@@ -71,7 +71,6 @@ def _download_file_from_url(url: str, local_path: Path):
     Downloads a large file from a URL.
     From: https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
     """
-    # NOTE the stream=True parameter below
     with open(local_path, "wb") as f:
         with httpx.stream("GET", url) as response:
             for chunk in response.iter_bytes():
