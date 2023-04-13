@@ -6,9 +6,8 @@ from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
-from erddapy import ERDDAP
 
-from pyo_oracle.config import config
+from pyo_oracle.config import config, default_server
 from pyo_oracle.utils import _format_args, _download_file_from_url, _get_griddap_dataset_url, _validate_argument, _layer_dataframe
 
 

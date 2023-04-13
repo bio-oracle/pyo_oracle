@@ -1,9 +1,14 @@
+"""
+Utitilies and private methods that are used internally.
+"""
+
+from copy import deepcopy
+from functools import lru_cache
+from pathlib import Path
+
 import httpx
 
-
-default_server = ERDDAP(
-    server=config["erddap_server"],
-)
+from pyo_oracle.config import default_server
 
 
 def _format_args(function):

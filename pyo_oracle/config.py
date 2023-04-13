@@ -3,6 +3,7 @@ Module to handle configuration, such as data directory, etc.
 """
 import configparser
 from pathlib import Path
+from erddapy import ERDDAP
 
 
 _default_config = {
@@ -84,3 +85,6 @@ def update_setting(key, value) -> None:
 
 
 config = dict(_get_default_config()["DEFAULT"])
+default_server = ERDDAP(
+    server=config["erddap_server"],
+)
