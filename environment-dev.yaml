@@ -1,9 +1,8 @@
-name: bio-oracle
+name: pyo-oracle-dev
 channels:
   - conda-forge
 dependencies:
   - erddapy
   - httpx
   - ipython
-  - pandas
   - pytest
