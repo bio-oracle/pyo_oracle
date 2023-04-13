@@ -1,7 +1,10 @@
-import pandas as pd
-import pyo_oracle as pyo
+from pathlib import Path
+
 from erddapy import ERDDAP
+import pandas as pd
 import pytest
+
+import pyo_oracle as pyo
 
 
 @pytest.fixture(scope="session")
@@ -66,6 +69,11 @@ def test_download_layers(layer, constraints, test_data_dir):
     pyo.download_layers(layer, output_directory=test_data_dir, response="csv", constraints=constraints, skip_confirmation=True)
 
 
+def test_list_local_data():
+    pyo.list_local_data(test_data_dir, )
+    pyo.list_local_data(test_data_dir, verbose=True)
+
+
 def test_manual_erddapy_requests(layer, constraints, test_data_dir):
     e = ERDDAP(server=pyo.config["erddap_server"], protocol="griddap")
     e.dataset_id = layer
@@ -73,8 +81,8 @@ def test_manual_erddapy_requests(layer, constraints, test_data_dir):
     e.constraints = constraints
     e._constraints_original = constraints
     df = e.to_pandas()
-    df.to_csv(test_data_dir.joinpath(f"{layer}.csv"))
     assert isinstance(df, pd.DataFrame)
     assert df.empty is False
-    
-
+    outfile = test_data_dir.joinpath(f"{layer}.csv")
+    df.to_csv(outfile)
+    assert Path(outfile).exists()

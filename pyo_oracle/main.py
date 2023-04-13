@@ -1,14 +1,14 @@
 """
 Main module with library functions.
 """
-from datetime import datetime
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
 
 import pandas as pd
 
-from pyo_oracle.utils import _format_args, _download_layer, _validate_argument, _layer_dataframe, verbose_print
+from pyo_oracle.config import config
+from pyo_oracle.utils import _format_args, _download_layer, _validate_argument, _layer_dataframe, verbose_print, convert_bytes, confirm
 
 
 def download_layers(dataset_ids: str or list, output_directory: str or Path = None, response: str = "nc", constraints: dict = None, skip_confirmation=False, verbose=True, log=True, timestamp=True) -> None:
@@ -19,13 +19,13 @@ def download_layers(dataset_ids: str or list, output_directory: str or Path = No
         dataset_ids = (dataset_ids,)
 
     if not skip_confirmation and not constraints:
-        response = input("No constraints have been set. This will download the full dataset, which may be a few GBs in size. Would you like to proceed? y/N")
-        if response.lower() not in "y yes".split():
-            print("Download cancelled.")
+        question = "No constraints have been set. This will download the full dataset, which may be a few GBs in size."
+
+        if not confirm(question):
             return
 
     for dataset_id in dataset_ids:
-        _download_layer(dataset_id, output_directory, response, constraints, verbose, log, timestamp)
+        _download_layer(dataset_id, output_directory, response, constraints, skip_confirmation, verbose, log, timestamp)
 
 
 @_format_args
@@ -66,14 +66,23 @@ def list_layers(variables: str or list = None, ssp: str or list = None, time_per
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data(verbose=False):
+def list_local_data(data_directory = None, verbose=False):
     """
     Lists datasets that are locally downloaded.
     """
-    verbose_print(f"Your data directory is '{config['data_directory']}'.\n", verbose)
-    verbose_print("Contents of data directory:\n", verbose)
+    if data_directory is None:
+        data_directory = config["data_directory"]
+
+    verbose_print(f"Your data directory is '{data_directory}'.\n", verbose)
+    verbose_print("Contents of data directory:", verbose)
     files = glob(str(Path(config["data_directory"]).joinpath("*")))
     if files:
-        print(files)
+        for file in files:
+            print("\t",Path(file).name)
+        print()
     else:
-        print(f"Data directory at '{config['data_directory']}' does not contain any data.")
+        print(f"Data directory at '{data_directory}' does not contain any data.")
+    if verbose:
+        dirsize = sum(Path(f).stat().st_size for f in files)
+        dirsize = convert_bytes(dirsize)
+        verbose_print(f"Size of data directory is {dirsize}.", verbose)

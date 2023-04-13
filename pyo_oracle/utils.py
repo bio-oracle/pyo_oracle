@@ -5,6 +5,7 @@ Utitilies and private methods that are used internally.
 from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
+from glob import glob
 import logging
 from pathlib import Path
 
@@ -67,9 +68,16 @@ def _download_file_from_url(url: str, local_path: Path):
     return local_path
 
 
-# Lambdas for printing and logging
+# Small helpers
 verbose_print = lambda message, verbose: print(message) if verbose else None
 info_logger = lambda msg, log: logging.info(msg) if log else None
+def confirm(msg, cancel_msg="Download cancelled."):
+    response = input(msg + " Would you like to proceed? y/N")
+    if response.lower() in "y yes".split():
+        return True
+    else:
+        print(cancel_msg)
+        return False
 
 
 def _get_griddap_dataset_url(
@@ -124,11 +132,27 @@ def _layer_dataframe(include_allDatasets=False):
     return df
 
 
-def _download_layer(dataset_id: str or list, output_directory: str or Path = None, response: str = "nc", constraints: dict = None, verbose=True, log=True, timestamp=True):
+def _download_layer(dataset_id: str or list, output_directory: str or Path = None, response: str = "nc", constraints: dict = None, skip_confirmation=False, verbose=True, log=True, timestamp=True):
     timestamp = datetime.now().isoformat(timespec='seconds')
     filename = f"{dataset_id}_{timestamp}.{response}" if timestamp else f"{dataset_id}.{response}"
-    outdir = output_directory if output_directory else config["data_directory"]
-    local_path = Path(outdir).joinpath(filename)
+    outdir = Path(output_directory) if output_directory else Path(config["data_directory"])
+    local_path = outdir.joinpath(filename)
+
+    # Check for existing layers
+    if not skip_confirmation:
+        print()
+        print(f"Data directory is '{outdir}'.", end="\n\n")
+        existing_layers = [i for i in outdir.iterdir() if str(i.name).startswith(dataset_id) and not str(i.name).endswith(".log")]
+        print(f"You have {len(existing_layers)} local datasets with the same preffix as '{dataset_id}' in the data directory:")
+        for layer in existing_layers:
+            print(layer.name, "\t", convert_bytes(layer.stat().st_size))
+        print()
+        print("You can check it again by running `list_local_data()`.")
+        print("To check the constraints of each existing dataset, see the log files in the data directory.", end="\n\n")
+
+        msg = ""
+        if not confirm(msg):
+            return
 
     # Configure logging
     logfile = local_path.with_suffix(".log")
@@ -146,7 +170,7 @@ def _download_layer(dataset_id: str or list, output_directory: str or Path = Non
 
     url = _get_griddap_dataset_url(dataset_id, constraints=constraints, response=response)  # Response is converted to 
     _download_file_from_url(url, local_path)
-    if (verbose or log) and (local_path := Path(local_path)).exists():
+    if (verbose or log) and local_path.exists():
         filesize = convert_bytes(local_path.stat().st_size)
         msg = f"Download finished at '{local_path}'. File size is {filesize}."
         info_logger(msg, log)
