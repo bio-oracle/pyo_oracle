@@ -3,12 +3,26 @@ Utitilies and private methods that are used internally.
 """
 
 from copy import deepcopy
+from datetime import datetime
 from functools import lru_cache
+import logging
 from pathlib import Path
 
 import httpx
 
-from pyo_oracle.config import default_server
+from pyo_oracle.config import default_server, config
+
+
+def convert_bytes(num):
+    """
+    this function will convert bytes to MB.... GB... etc
+
+    from https://stackoverflow.com/questions/2104080/how-do-i-check-file-size-in-python
+    """
+    for x in ['bytes', 'KB', 'MB', 'GB', 'TB']:
+        if num < 1024.0:
+            return "%3.1f %s" % (num, x)
+        num /= 1024.0
 
 
 def _format_args(function):
@@ -53,23 +67,26 @@ def _download_file_from_url(url: str, local_path: Path):
     return local_path
 
 
+# Lambdas for printing and logging
+verbose_print = lambda message, verbose: print(message) if verbose else None
+info_logger = lambda msg, log: logging.info(msg) if log else None
+
 
 def _get_griddap_dataset_url(
     dataset_id,
     variables=None,
     constraints=None,
     response="nc",
-    _print=False,
+    verbose=False,
 ):
-    printer = lambda message: print(message) if _print else None
 
     server = deepcopy(default_server)
     server.dataset_id = dataset_id
     server.protocol = "griddap"
     server.griddap_initialize()
 
-    printer(f"Selected '{dataset_id}' dataset.")
-    printer(f"Dataset info available at: {server.get_info_url()}")
+    verbose_print(f"Selected '{dataset_id}' dataset.", verbose)
+    verbose_print(f"Dataset info available at: {server.get_info_url()}", verbose)
 
     # Setting constraints that match
     if constraints:
@@ -82,8 +99,8 @@ def _get_griddap_dataset_url(
     # The same for variables
     if variables:
         server.variables = [v for v in server.variables if v in variables]
-    printer(
-        f"Selected {len(server.variables)} variables: {server.variables}."
+    verbose_print(
+        f"Selected {len(server.variables)} variables: {server.variables}.", verbose
     )
     url = server.get_download_url(response=response)
     return url
@@ -106,3 +123,31 @@ def _layer_dataframe(include_allDatasets=False):
         df = df.iloc[1:]
     return df
 
+
+def _download_layer(dataset_id: str or list, output_directory: str or Path = None, response: str = "nc", constraints: dict = None, verbose=True, log=True, timestamp=True):
+    timestamp = datetime.now().isoformat(timespec='seconds')
+    filename = f"{dataset_id}_{timestamp}.{response}" if timestamp else f"{dataset_id}.{response}"
+    outdir = output_directory if output_directory else config["data_directory"]
+    local_path = Path(outdir).joinpath(filename)
+
+    # Configure logging
+    logfile = local_path.with_suffix(".log")
+    logging.basicConfig(filename=logfile, format="%(asctime)s %(message)s", level=logging.INFO)
+
+    msg = f"Downloading dataset '{dataset_id}' as {response} file to '{outdir}'."
+    info_logger(msg, log)
+    verbose_print(msg, verbose)
+
+    msg = "Constraints are:"
+    info_logger(msg, log)
+    verbose_print(msg, verbose)
+    info_logger(constraints, log)
+    verbose_print(constraints, verbose)
+
+    url = _get_griddap_dataset_url(dataset_id, constraints=constraints, response=response)  # Response is converted to 
+    _download_file_from_url(url, local_path)
+    if (verbose or log) and (local_path := Path(local_path)).exists():
+        filesize = convert_bytes(local_path.stat().st_size)
+        msg = f"Download finished at '{local_path}'. File size is {filesize}."
+        info_logger(msg, log)
+        verbose_print(msg, verbose)
