@@ -1,37 +1,32 @@
 """
 Main module with library functions.
 """
-from copy import deepcopy
+from datetime import datetime
 from functools import lru_cache
+from glob import glob
 from pathlib import Path
 
 import pandas as pd
 
-from pyo_oracle.config import config, default_server
-from pyo_oracle.utils import _format_args, _download_file_from_url, _get_griddap_dataset_url, _validate_argument, _layer_dataframe
+from pyo_oracle.utils import _format_args, _download_layer, _validate_argument, _layer_dataframe, verbose_print
 
 
-def download_layers(dataset_ids: str or list, output_directory: str or Path = None, response: str = "nc", constraints: dict = None, skip_confirmation=False):
+def download_layers(dataset_ids: str or list, output_directory: str or Path = None, response: str = "nc", constraints: dict = None, skip_confirmation=False, verbose=True, log=True, timestamp=True) -> None:
     """
     Downloads one or more layers.
     """
     if isinstance(dataset_ids, str):
         dataset_ids = (dataset_ids,)
 
-    if not skip_confirmation:
+    if not skip_confirmation and not constraints:
         response = input("No constraints have been set. This will download the full dataset, which may be a few GBs in size. Would you like to proceed? y/N")
         if response.lower() not in "y yes".split():
             print("Download cancelled.")
             return
 
-    s = deepcopy(default_server)
     for dataset_id in dataset_ids:
-        url = _get_griddap_dataset_url(dataset_id, constraints=constraints, response=response)  # Response is converted to 
-        filename = f"{dataset_id}.{response}"
-        outdir = output_directory if output_directory else config["data_directory"]
-        local_path = Path(outdir).joinpath(filename)
-        _download_file_from_url(url, local_path)
-        
+        _download_layer(dataset_id, output_directory, response, constraints, verbose, log, timestamp)
+
 
 @_format_args
 @lru_cache(8)
@@ -71,8 +66,14 @@ def list_layers(variables: str or list = None, ssp: str or list = None, time_per
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data():
+def list_local_data(verbose=False):
     """
     Lists datasets that are locally downloaded.
     """
-    pass
+    verbose_print(f"Your data directory is '{config['data_directory']}'.\n", verbose)
+    verbose_print("Contents of data directory:\n", verbose)
+    files = glob(str(Path(config["data_directory"]).joinpath("*")))
+    if files:
+        print(files)
+    else:
+        print(f"Data directory at '{config['data_directory']}' does not contain any data.")
