@@ -21,6 +21,9 @@ def _format_args(function):
     """
     Converts list/str to tuple.
 
+    This is used as we want functions to work on multiple items, but also want to allow users
+    to pass strings.
+
     Prevent TypeError when passing list to function with lru_cache.
 
     From: https://stackoverflow.com/questions/49210801/python3-pass-lists-to-function-with-functools-lru-cache
