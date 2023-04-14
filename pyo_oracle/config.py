@@ -8,10 +8,11 @@ from erddapy import ERDDAP
 
 _default_config = {
     "data_directory": str(Path(__file__).parent.joinpath("data/").absolute()),
-    "erddap_server": "http://erddap.bio-oracle.org:8080/erddap/"
+    "erddap_server": "http://erddap.bio-oracle.org:8080/erddap/",
 }
 
 config_file = Path(__file__).absolute().parent.joinpath(("config.ini"))
+
 
 def create_config(default_config: dict = _default_config, path: str = None) -> None:
     """
@@ -20,7 +21,9 @@ def create_config(default_config: dict = _default_config, path: str = None) -> N
     config = configparser.ConfigParser()
     config["DEFAULT"] = default_config
     if config_file.exists():
-        response = input(f"Config file '{config_file}' already exists, overwrite it? y/N \n")
+        response = input(
+            f"Config file '{config_file}' already exists, overwrite it? y/N \n"
+        )
         if (response.lower() not in "y yes") or (not response):
             print("Operation cancelled.\n")
             return
@@ -40,7 +43,9 @@ def _get_default_config() -> configparser.ConfigParser:
             create_config()
             return _get_default_config()
         except Exception as e:
-            print(f"Error: could not load or create configuration file. Loading default values.")
+            print(
+                f"Error: could not load or create configuration file. Loading default values."
+            )
             config = configparser.ConfigParser()
             config["DEFAULT"] = _default_config
             return config
@@ -56,7 +61,6 @@ def get_config_path() -> Path:
         print("Config file doesn't exist, creating it.")
         create_config()
         get_config_path()
-    
 
 
 def print_config_values() -> None:
@@ -70,7 +74,9 @@ def print_config_values() -> None:
     for key, value in _get_default_config()["DEFAULT"].items():
         print(key, "\t", value)
     print()
-    print(f"Edit the configuration file '{config_file}' or use the 'update_setting' function in this module to edit them.")
+    print(
+        f"Edit the configuration file '{config_file}' or use the 'update_setting' function in this module to edit them."
+    )
 
 
 def update_setting(key, value) -> None:
