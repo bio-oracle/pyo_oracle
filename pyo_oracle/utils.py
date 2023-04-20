@@ -145,7 +145,7 @@ def _download_layer(
     log=True,
     timestamp=True,
 ):
-    timestamp = datetime.now().isoformat(timespec="seconds")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H%M%S")
     filename = (
         f"{dataset_id}_{timestamp}.{response}"
         if timestamp
@@ -184,7 +184,10 @@ def _download_layer(
     # Configure logging
     logfile = local_path.with_suffix(".log")
     logging.basicConfig(
-        filename=logfile, format="%(asctime)s %(message)s", level=logging.INFO
+        filename=logfile,
+        format="%(asctime)s %(message)s",
+        level=logging.INFO,
+        datefmt="%Y-%m-%d %H%M%S",
     )
 
     msg = f"Downloading dataset '{dataset_id}' as {response} file to '{outdir}'."
