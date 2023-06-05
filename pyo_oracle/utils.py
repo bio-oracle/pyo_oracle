@@ -165,21 +165,22 @@ def _download_layer(
             for i in outdir.iterdir()
             if str(i.name).startswith(dataset_id) and not str(i.name).endswith(".log")
         ]
-        print(
-            f"You have {len(existing_layers)} local datasets with the same preffix as '{dataset_id}' in the data directory:"
-        )
-        for layer in existing_layers:
-            print(layer.name, "\t", convert_bytes(layer.stat().st_size))
-        print()
-        print("You can check it again by running `list_local_data()`.")
-        print(
-            "To check the constraints of each existing dataset, see the log files in the data directory.",
-            end="\n\n",
-        )
+        if existing_layers:
+            print(
+                f"You have {len(existing_layers)} local datasets with the same preffix as '{dataset_id}' in the data directory:"
+            )
+            for layer in existing_layers:
+                print(layer.name, "\t", convert_bytes(layer.stat().st_size))
+            print()
+            print("You can check it again by running `list_local_data()`.")
+            print(
+                "To check the constraints of each existing dataset, see the log files in the data directory.",
+                end="\n\n",
+            )
 
-        msg = ""
-        if not confirm(msg):
-            return
+            msg = ""
+            if not confirm(msg):
+                return
 
     # Configure logging
     logfile = local_path.with_suffix(".log")
