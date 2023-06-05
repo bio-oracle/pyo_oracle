@@ -8,7 +8,7 @@ from erddapy import ERDDAP
 
 _default_config = {
     "data_directory": str(Path(__file__).parent.joinpath("data/").absolute()),
-    "erddap_server": "http://erddap.bio-oracle.org:8080/erddap/",
+    "erddap_server": "http://erddap.bio-oracle.org/erddap/",
 }
 
 config_file = Path(__file__).absolute().parent.joinpath(("config.ini"))
