@@ -65,7 +65,7 @@ def _download_file_from_url(url: str, local_path: Path):
     From: https://stackoverflow.com/questions/16694907/download-large-file-in-python-with-requests
     """
     with open(local_path, "wb") as f:
-        with httpx.stream("GET", url) as response:
+        with httpx.stream("GET", url, follow_redirects=True) as response:
             for chunk in response.iter_bytes():
                 f.write(chunk)
     return local_path
@@ -77,7 +77,8 @@ info_logger = lambda msg, log: logging.info(msg) if log else None
 
 
 def confirm(msg, cancel_msg="Download cancelled."):
-    response = input(msg + " Would you like to proceed? y/N")
+    print("You can disable these confirmation prompts by passing 'skip_confirmation=True' to the function, or set the 'skip_confirmation' setting to True in the config.ini file.\n")
+    response = input(msg + " Would you like to proceed? y/N\n")
     if response.lower() in "y yes".split():
         return True
     else:
@@ -140,12 +141,12 @@ def _download_layer(
     output_directory: str or Path = None,
     response: str = "nc",
     constraints: dict = None,
-    skip_confirmation=False,
+    skip_confirmation=None,
     verbose=True,
     log=True,
     timestamp=True,
 ):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H%M%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     filename = (
         f"{dataset_id}_{timestamp}.{response}"
         if timestamp
@@ -157,6 +158,8 @@ def _download_layer(
     local_path = outdir.joinpath(filename)
 
     # Check for existing layers
+    if skip_confirmation is None:
+        skip_confirmation = eval(config["skip_confirmation"])
     if not skip_confirmation:
         print()
         print(f"Data directory is '{outdir}'.", end="\n\n")
@@ -167,7 +170,7 @@ def _download_layer(
         ]
         if existing_layers:
             print(
-                f"You have {len(existing_layers)} local datasets with the same preffix as '{dataset_id}' in the data directory:"
+                f"You have {len(existing_layers)} local datasets with the same prefix as '{dataset_id}' in the data directory:"
             )
             for layer in existing_layers:
                 print(layer.name, "\t", convert_bytes(layer.stat().st_size))
