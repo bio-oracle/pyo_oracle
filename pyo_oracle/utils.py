@@ -77,7 +77,10 @@ info_logger = lambda msg, log: logging.info(msg) if log else None
 
 
 def confirm(msg, cancel_msg="Download cancelled."):
-    print("You can disable these confirmation prompts by passing 'skip_confirmation=True' to the function, or set the 'skip_confirmation' setting to True in the config.ini file.\n")
+    print(
+        "You can disable these confirmation prompts by passing 'skip_confirmation=True' to the function,"
+        " or set the 'skip_confirmation' setting to True in the config.ini file.\n"
+    )
     response = input(msg + " Would you like to proceed? y/N\n")
     if response.lower() in "y yes".split():
         return True

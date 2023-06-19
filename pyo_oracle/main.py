@@ -35,11 +35,9 @@ def download_layers(
     if isinstance(dataset_ids, str):
         dataset_ids = (dataset_ids,)
 
-    breakpoint()
     if skip_confirmation is None:
         skip_confirmation = eval(config["skip_confirmation"])
 
-    breakpoint()
     if not skip_confirmation and not constraints:
         question = "No constraints have been set. This will download the full dataset, which may be a few GBs in size."
 
