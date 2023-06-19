@@ -7,7 +7,7 @@ packages = ["pyo_oracle"]
 
 [project]
 name = "pyo_oracle"
-version = "0.0.1"
+version = "0.0.1a"
 authors = [
   { name="Vini Salazar", email="vinicius.salazar@unimelb.edu.au" },
 ]
