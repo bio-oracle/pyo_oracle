@@ -24,7 +24,7 @@ def download_layers(
     output_directory: str or Path = None,
     response: str = "nc",
     constraints: dict = None,
-    skip_confirmation=False,
+    skip_confirmation=None,
     verbose=True,
     log=True,
     timestamp=True,
@@ -35,6 +35,11 @@ def download_layers(
     if isinstance(dataset_ids, str):
         dataset_ids = (dataset_ids,)
 
+    breakpoint()
+    if skip_confirmation is None:
+        skip_confirmation = eval(config["skip_confirmation"])
+
+    breakpoint()
     if not skip_confirmation and not constraints:
         question = "No constraints have been set. This will download the full dataset, which may be a few GBs in size."
 
@@ -130,7 +135,7 @@ def list_layers(
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data(data_directory=None, verbose=False):
+def list_local_data(data_directory=None, verbose=True):
     """
     Lists datasets that are locally downloaded.
     """
@@ -140,9 +145,13 @@ def list_local_data(data_directory=None, verbose=False):
     verbose_print(f"Your data directory is '{data_directory}'.\n", verbose)
     verbose_print("Contents of data directory:", verbose)
     files = glob(str(Path(config["data_directory"]).joinpath("*")))
+    if not verbose:
+        files = [f for f in files if not str(f).endswith(".log")]
     if files:
         for file in files:
-            print("\t", Path(file).name)
+            print(
+                "\t", Path(file).name, "\t", convert_bytes(Path(file).stat().st_size)
+            ) if verbose else print("\t", Path(file).name)
         print()
     else:
         print(f"Data directory at '{data_directory}' does not contain any data.")
