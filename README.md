@@ -31,10 +31,10 @@ pyo_oracle.list_local_data()
 
 ```bash
 # With conda
-conda create -n pyo_oracle conda-forge::pyo_oracle
+conda create -n pyo_oracle conda-forge::pyo-oracle
 
 # or with pip
-pip install pyo_oracle
+pip install pyo-oracle
 ```
 
 Please open an issue if you experience any problems. More documentation coming soon!
