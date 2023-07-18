@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2023 Bio-ORACLE consortia
+Copyright (c) 2023 Bio-ORACLE consortium
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
