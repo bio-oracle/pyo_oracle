@@ -4,6 +4,7 @@ Main module with library functions.
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
+from typing import Optional, Union, List, Dict
 
 import pandas as pd
 
@@ -20,17 +21,40 @@ from pyo_oracle.utils import (
 
 
 def download_layers(
-    dataset_ids: str or list,
-    output_directory: str or Path = None,
+    dataset_ids: Union[str, List[str]],
+    output_directory: Union[str, Path] = None,
     response: str = "nc",
-    constraints: dict = None,
-    skip_confirmation=None,
-    verbose=True,
-    log=True,
-    timestamp=True,
+    constraints: Dict = None,
+    skip_confirmation: bool = None,
+    verbose: bool = True,
+    log: bool = True,
+    timestamp: bool = True,
 ) -> None:
     """
     Downloads one or more layers.
+
+    Args:
+        dataset_ids (str or list): Dataset ID(s) to download. A single dataset ID or a list of IDs.
+        output_directory (str or Path, optional): Directory where downloaded files will be saved. If not provided, the default directory will be used.
+        response (str, optional): Format of the response to download. Default is 'nc'.
+        constraints (dict, optional): Constraints to apply to the downloaded data.
+        skip_confirmation (bool, optional): If True, confirmation prompts will be skipped. If None, the value from the configuration will be used.
+        verbose (bool, optional): If True, detailed information will be printed during the download process.
+        log (bool, optional): If True, a log of the download will be created.
+        timestamp (bool, optional): If True, a timestamp will be added to the downloaded files' names.
+
+    Returns:
+        None
+
+    Note:
+        This function downloads the specified dataset(s) and saves them to the provided or default output directory.
+
+    Example:
+        # Download a single dataset with default settings
+        download_layers(dataset_ids="dataset123")
+
+        # Download multiple datasets with custom settings
+        download_layers(dataset_ids=["dataset456", "dataset789"], output_directory="/path/to/output", response="csv", verbose=False)
     """
     if isinstance(dataset_ids, str):
         dataset_ids = (dataset_ids,)
@@ -69,10 +93,27 @@ def list_layers(
     """
     Lists available layers in the Bio-ORACLE server.
 
-        variables (str|list): variables to filter from. Valid values are ['po4','o2','si','ph','sws','phyc','so','thetao','dfe','no3','sithick','tas','siconc','chl','mlotst','clt','terrain'].
-        ssp (str|list): future scenario to choose from. Valid values are ['ssp119', 'ssp126', 'ssp370', 'ssp585', 'ssp460', 'ssp245', 'baseline'].
-        time_period (str): time period to choose from. Valie values are either 'present' or 'future'.
-        dataframe (bool): whether to return a Pandas DataFrame. If False, will return a list.
+    Args:
+        variables (str|list): Variables to filter from. Valid values are ['po4','o2','si','ph','sws','phyc','so','thetao','dfe','no3','sithick','tas','siconc','chl','mlotst','clt','terrain'].
+        ssp (str|list): Future scenario to choose from. Valid values are ['ssp119', 'ssp126', 'ssp370', 'ssp585', 'ssp460', 'ssp245', 'baseline'].
+        time_period (str): Time period to choose from. Valid values are either 'present' or 'future'.
+        dataframe (bool): Whether to return a Pandas DataFrame. If False, will return a list.
+        _include_allDatasets (bool): Internal flag for including all datasets.
+
+    Returns:
+        pd.DataFrame or list: If 'dataframe' is True (default), returns a Pandas DataFrame containing filtered layers' information. If 'dataframe' is False, returns a list of filtered dataset IDs.
+
+    Notes:
+        - This function queries the Bio-ORACLE server to list available layers based on the provided filters.
+        - Filtering can be done by specifying 'variables', 'ssp', and 'time_period'.
+        - The function provides flexibility in choosing to return a DataFrame or a list of dataset IDs.
+
+    Example:
+        # List all available layers
+        all_layers = list_layers()
+
+        # List layers for specific variables and future scenarios
+        filtered_layers = list_layers(variables=['po4', 'o2'], ssp='ssp585', dataframe=True)
     """
     valid_variables = [
         "po4",
@@ -94,13 +135,16 @@ def list_layers(
         "terrain",
     ]
     valid_ssp = ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"]
-    valid_time_period = "present future".split()
+    valid_time_period = ["present", "future"]
 
-    for arg in "variables", "ssp", "time_period":
+    # Validate the provided arguments against valid values
+    for arg in ("variables", "ssp", "time_period"):
         _validate_argument(arg, eval(arg), eval(f"valid_{arg}"))
 
+    # Fetch the dataframe containing layer information
     _dataframe = _layer_dataframe(_include_allDatasets)
-    # Filter resulting dataframe
+
+    # Filter the resulting dataframe based on provided filters
     if variables:
         _dataframe = pd.concat(
             [
@@ -126,16 +170,33 @@ def list_layers(
             ]
         )
 
-    # Convert to list
+    # Convert to list if needed
     if dataframe:
         return _dataframe.reset_index(drop=True)
     else:
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data(data_directory=None, verbose=True):
+def list_local_data(data_directory: Optional[str] = None, verbose: bool = True):
     """
     Lists datasets that are locally downloaded.
+
+    Args:
+        data_directory (str, optional): Path to the data directory. If not provided, the path from the configuration will be used.
+        verbose (bool): If True, detailed information will be printed. If False, only basic file names will be printed.
+
+    Returns:
+        None
+
+    Note:
+        This function lists the datasets available in the specified data directory.
+
+    Example:
+        # List all datasets in the default data directory with detailed information
+        list_local_data()
+
+        # List datasets in a specific directory without verbose output
+        list_local_data(data_directory="/path/to/data", verbose=False)
     """
     if data_directory is None:
         data_directory = config["data_directory"]
