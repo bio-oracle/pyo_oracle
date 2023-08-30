@@ -16,15 +16,15 @@ def test_data_dir(tmp_path_factory):
 @pytest.fixture
 def constraints():
     constraints = {
-    "time>=": "2000-01-01T00:00:00Z",
-    "time<=": "2010-01-01T12:00:00Z",
-    "time_step": 100,
-    "latitude>=": 0,
-    "latitude<=": 10,
-    "latitude_step": 100,
-    "longitude>=": 0,
-    "longitude<=": 10,
-    "longitude_step": 1
+        "time>=": "2000-01-01T00:00:00Z",
+        "time<=": "2010-01-01T12:00:00Z",
+        "time_step": 100,
+        "latitude>=": 0,
+        "latitude<=": 10,
+        "latitude_step": 100,
+        "longitude>=": 0,
+        "longitude<=": 10,
+        "longitude_step": 1,
     }
     return constraints
 
@@ -42,13 +42,21 @@ def test_list_layers():
     assert layers_df_all.empty is False
 
     # Test variables
-    layers_df_filter = pyo.list_layers(variables=["po4",])
+    layers_df_filter = pyo.list_layers(
+        variables=[
+            "po4",
+        ]
+    )
     assert isinstance(layers_df_filter, pd.DataFrame)
     assert layers_df_filter.empty is False
     assert len(layers_df_filter) < len(layers_df_all)
 
     # Test ssp
-    layers_df_filter = pyo.list_layers(ssp=["ssp119",])
+    layers_df_filter = pyo.list_layers(
+        ssp=[
+            "ssp119",
+        ]
+    )
     assert isinstance(layers_df_filter, pd.DataFrame)
     assert layers_df_filter.empty is False
     assert len(layers_df_filter) < len(layers_df_all)
@@ -59,18 +67,34 @@ def test_list_layers():
     assert layers_df_filter.empty is False
     assert len(layers_df_filter) < len(layers_df_all)
 
+    # Test depth
+    layers_df_filter = pyo.list_layers(depth=["mean", "surf"])
+    assert isinstance(layers_df_filter, pd.DataFrame)
+    assert layers_df_filter.empty is False
+    assert len(layers_df_filter) < len(layers_df_all)
+
     # Test list
-    layers_list = pyo.list_layers(variables="po4", ssp=["ssp119", "ssp126"], time_period="future", dataframe=False)
+    layers_list = pyo.list_layers(
+        variables="po4", ssp=["ssp119", "ssp126"], time_period="future", dataframe=False
+    )
     assert isinstance(layers_list, list)
     assert len(layers_list) > 0
 
 
 def test_download_layers(layer, constraints, test_data_dir):
-    pyo.download_layers(layer, output_directory=test_data_dir, response="csv", constraints=constraints, skip_confirmation=True)
+    pyo.download_layers(
+        layer,
+        output_directory=test_data_dir,
+        response="csv",
+        constraints=constraints,
+        skip_confirmation=True,
+    )
 
 
 def test_list_local_data():
-    pyo.list_local_data(test_data_dir, )
+    pyo.list_local_data(
+        test_data_dir,
+    )
     pyo.list_local_data(test_data_dir, verbose=True)
 
 
