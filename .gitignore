@@ -7,3 +7,4 @@
 **/*.ini
 build/
 pyo_oracle/data
+.venv/
