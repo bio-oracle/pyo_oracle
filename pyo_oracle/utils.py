@@ -80,19 +80,22 @@ def _validate_argument(
                 )
 
 
-def _download_file_from_url(url: str, local_path: Path) -> Path:
+def _download_file_from_url(url: str, local_path: Path, **httpx_kwargs) -> Path:
     """
     Downloads a large file from a URL.
 
     Args:
         url (str): URL of the file to download.
         local_path (Path): Local path to save the downloaded file.
+        httpx_kwargs: keyword arguments for the httpx.stream function.
 
     Returns:
         Path: Path to the downloaded local file.
     """
     with open(local_path, "wb") as f:
-        with httpx.stream("GET", url, follow_redirects=True) as response:
+        with httpx.stream(
+            "GET", url, follow_redirects=True, **httpx_kwargs
+        ) as response:
             for chunk in response.iter_bytes():
                 f.write(chunk)
     return local_path
@@ -208,6 +211,8 @@ def _download_layer(
     verbose: bool = True,
     log: bool = True,
     timestamp: bool = True,
+    timeout: int = 120,
+    **httpx_kwargs,
 ) -> None:
     """
     Downloads a dataset layer.
@@ -221,6 +226,8 @@ def _download_layer(
         verbose (bool, optional): If True, detailed information will be printed during the download process.
         log (bool, optional): If True, a log of the download will be created.
         timestamp (bool, optional): If True, a timestamp will be added to the downloaded files' names.
+        timeout (int, optional): Timeout in seconds for the download request.
+        httpx_kwargs: keyword arguments for the httpx.stream function.
 
     Returns:
         None
@@ -286,7 +293,7 @@ def _download_layer(
     url = _get_griddap_dataset_url(
         dataset_id, constraints=constraints, response=response
     )
-    _download_file_from_url(url, local_path)
+    _download_file_from_url(url, local_path, timeout=timeout, **httpx_kwargs)
     if (verbose or log) and local_path.exists():
         filesize = convert_bytes(local_path.stat().st_size)
         msg = f"Download finished at '{local_path}'. File size is {filesize}."
