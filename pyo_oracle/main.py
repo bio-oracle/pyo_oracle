@@ -93,6 +93,7 @@ def list_layers(
     variables: str or list = None,
     ssp: str or list = None,
     time_period: str = None,
+    depth: str or list = None,
     dataframe: bool = True,
     _include_allDatasets: bool = False,
 ) -> pd.DataFrame or list:
@@ -103,6 +104,7 @@ def list_layers(
         variables (str|list): Variables to filter from. Valid values are ['po4','o2','si','ph','sws','phyc','so','thetao','dfe','no3','sithick','tas','siconc','chl','mlotst','clt','terrain'].
         ssp (str|list): Future scenario to choose from. Valid values are ['ssp119', 'ssp126', 'ssp370', 'ssp585', 'ssp460', 'ssp245', 'baseline'].
         time_period (str): Time period to choose from. Valid values are either 'present' or 'future'.
+        depth (str|list): Depth category to choose from. Valid values are ['min', 'mean', 'max', 'surf'].
         dataframe (bool): Whether to return a Pandas DataFrame. If False, will return a list.
         _include_allDatasets (bool): Internal flag for including all datasets.
 
@@ -142,9 +144,10 @@ def list_layers(
     ]
     valid_ssp = ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"]
     valid_time_period = ["present", "future"]
+    valid_depth = ["min", "mean", "max", "surf"]
 
     # Validate the provided arguments against valid values
-    for arg in ("variables", "ssp", "time_period"):
+    for arg in ("variables", "ssp", "time_period", "depth"):
         _validate_argument(arg, eval(arg), eval(f"valid_{arg}"))
 
     # Fetch the dataframe containing layer information
@@ -173,6 +176,17 @@ def list_layers(
                     | (_dataframe["datasetID"].str.contains(v.upper()))
                 ]
                 for v in ssp
+            ]
+        )
+    if depth:
+        _dataframe = pd.concat(
+            [
+                _dataframe[
+                    (_dataframe["datasetID"].str.contains("depth" + v.lower()))
+                    | (_dataframe["datasetID"].str.contains("depth" + v.capitalize()))
+                    | (_dataframe["datasetID"].str.contains("depth" + v.upper()))
+                ]
+                for v in depth
             ]
         )
 
