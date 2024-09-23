@@ -30,6 +30,7 @@ def download_layers(
     log: bool = True,
     timestamp: bool = True,
     timeout: int = 120,
+    skip_convert_to_lowercase: bool = False,
     **httpx_kwargs,
 ) -> None:
     """
@@ -45,6 +46,7 @@ def download_layers(
         log (bool, optional): If True, a log of the download will be created.
         timestamp (bool, optional): If True, a timestamp will be added to the downloaded files' names.
         timeout (int, optional): Timeout in seconds for the download request.
+        skip_convert_to_lowercase (bool, optional): If True, the dataset ID will not be converted to lowercase.
         httpx_kwargs (dict, optional): Additional keyword arguments to pass to the httpx function.
 
     Returns:
@@ -73,6 +75,9 @@ def download_layers(
             return
 
     for dataset_id in dataset_ids:
+        if not dataset_id.islower() and not skip_convert_to_lowercase:
+            print(f"Converting dataset ID '{dataset_id}' to lowercase.")
+            dataset_id = dataset_id.lower()
         _download_layer(
             dataset_id,
             output_directory,
