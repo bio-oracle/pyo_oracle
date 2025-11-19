@@ -100,6 +100,7 @@ def list_layers(
     time_period: str = None,
     depth: str or list = None,
     dataframe: bool = True,
+    simplify = False,
     _include_allDatasets: bool = False,
 ) -> pd.DataFrame or list:
     """
@@ -111,6 +112,7 @@ def list_layers(
         time_period (str): Time period to choose from. Valid values are either 'present' or 'future'.
         depth (str|list): Depth category to choose from. Valid values are ['min', 'mean', 'max', 'surf'].
         dataframe (bool): Whether to return a Pandas DataFrame. If False, will return a list.
+        simplify (bool): Whether to simplify the output. If True, will return only dataset ID and dataset title. If dataframe=False, this doesn't do anything.
         _include_allDatasets (bool): Internal flag for including all datasets.
 
     Returns:
@@ -199,6 +201,9 @@ def list_layers(
 
     # Convert to list if needed
     if dataframe:
+        # Simplify option
+        if simplify:
+            _dataframe = _dataframe[["datasetID", "title"]]
         return _dataframe.reset_index(drop=True)
     else:
         return _dataframe["datasetID"].to_list()
