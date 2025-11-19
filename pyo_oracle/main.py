@@ -128,32 +128,34 @@ def list_layers(
         # List layers for specific variables and future scenarios
         filtered_layers = list_layers(variables=['po4', 'o2'], ssp='ssp585', dataframe=True)
     """
-    valid_variables = [
-        "po4",
-        "o2",
-        "si",
-        "ph",
-        "sws",
-        "phyc",
-        "so",
-        "thetao",
-        "dfe",
-        "no3",
-        "sithick",
-        "tas",
-        "siconc",
-        "chl",
-        "mlotst",
-        "clt",
-        "terrain",
-    ]
-    valid_ssp = ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"]
-    valid_time_period = ["present", "future"]
-    valid_depth = ["min", "mean", "max", "surf"]
+    valid_args = {
+        "valid_variables": [
+            "po4",
+            "o2",
+            "si",
+            "ph",
+            "sws",
+            "phyc",
+            "so",
+            "thetao",
+            "dfe",
+            "no3",
+            "sithick",
+            "tas",
+            "siconc",
+            "chl",
+            "mlotst",
+            "clt",
+            "terrain",
+        ],
+        "valid_ssp": ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"],
+        "valid_time_period": ["present", "future"],
+        "valid_depth": ["min", "mean", "max", "surf"],
+    }
 
     # Validate the provided arguments against valid values
     for arg in ("variables", "ssp", "time_period", "depth"):
-        _validate_argument(arg, eval(arg), eval(f"valid_{arg}"))
+        _validate_argument(arg, eval(arg), valid_args[f"valid_{arg}"])
 
     # Fetch the dataframe containing layer information
     _dataframe = _layer_dataframe(_include_allDatasets)
