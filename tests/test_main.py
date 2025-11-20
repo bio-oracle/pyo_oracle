@@ -68,7 +68,7 @@ def test_list_layers():
     assert len(layers_df_filter) < len(layers_df_all)
 
     # Test depth
-    layers_df_filter = pyo.list_layers(depth=["mean", "surf"])
+    layers_df_filter = pyo.list_layers(depth=["mean", "surf"], simplify=True)
     assert isinstance(layers_df_filter, pd.DataFrame)
     assert layers_df_filter.empty is False
     assert len(layers_df_filter) < len(layers_df_all)
