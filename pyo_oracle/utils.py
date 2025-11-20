@@ -12,7 +12,7 @@ from typing import Dict, List, Optional, Union
 import httpx
 import pandas as pd
 
-from pyo_oracle.config import default_server, config
+from pyo_oracle._config import default_server, config
 
 
 def convert_bytes(num: float) -> str:

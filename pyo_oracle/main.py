@@ -9,7 +9,7 @@ from typing import Optional, Union, List, Dict
 
 import pandas as pd
 
-from pyo_oracle.config import config
+from pyo_oracle._config import config
 from pyo_oracle.utils import (
     _format_args,
     _download_layer,
