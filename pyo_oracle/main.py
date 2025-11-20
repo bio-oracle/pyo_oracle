@@ -1,6 +1,7 @@
 """
 Main module with library functions.
 """
+import re
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
@@ -8,7 +9,7 @@ from typing import Optional, Union, List, Dict
 
 import pandas as pd
 
-from pyo_oracle.config import config
+from pyo_oracle._config import config
 from pyo_oracle.utils import (
     _format_args,
     _download_layer,
@@ -95,22 +96,26 @@ def download_layers(
 @_format_args
 @lru_cache(8)
 def list_layers(
+    search: str or list = None,
     variables: str or list = None,
     ssp: str or list = None,
     time_period: str = None,
     depth: str or list = None,
     dataframe: bool = True,
+    simplify = False,
     _include_allDatasets: bool = False,
 ) -> pd.DataFrame or list:
     """
     Lists available layers in the Bio-ORACLE server.
 
     Args:
+        search (str|list): Natural text search term, eg. 'Temperature', 'Oxygen'.
         variables (str|list): Variables to filter from. Valid values are ['po4','o2','si','ph','sws','phyc','so','thetao','dfe','no3','sithick','tas','siconc','chl','mlotst','clt','terrain'].
         ssp (str|list): Future scenario to choose from. Valid values are ['ssp119', 'ssp126', 'ssp370', 'ssp585', 'ssp460', 'ssp245', 'baseline'].
         time_period (str): Time period to choose from. Valid values are either 'present' or 'future'.
         depth (str|list): Depth category to choose from. Valid values are ['min', 'mean', 'max', 'surf'].
         dataframe (bool): Whether to return a Pandas DataFrame. If False, will return a list.
+        simplify (bool): Whether to simplify the output. If True, will return only dataset ID and dataset title. If dataframe=False, this doesn't do anything.
         _include_allDatasets (bool): Internal flag for including all datasets.
 
     Returns:
@@ -128,35 +133,53 @@ def list_layers(
         # List layers for specific variables and future scenarios
         filtered_layers = list_layers(variables=['po4', 'o2'], ssp='ssp585', dataframe=True)
     """
-    valid_variables = [
-        "po4",
-        "o2",
-        "si",
-        "ph",
-        "sws",
-        "phyc",
-        "so",
-        "thetao",
-        "dfe",
-        "no3",
-        "sithick",
-        "tas",
-        "siconc",
-        "chl",
-        "mlotst",
-        "clt",
-        "terrain",
-    ]
-    valid_ssp = ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"]
-    valid_time_period = ["present", "future"]
-    valid_depth = ["min", "mean", "max", "surf"]
+    valid_args = {
+        "valid_variables": [
+            "po4",
+            "o2",
+            "si",
+            "ph",
+            "sws",
+            "phyc",
+            "so",
+            "thetao",
+            "dfe",
+            "no3",
+            "sithick",
+            "tas",
+            "siconc",
+            "chl",
+            "mlotst",
+            "clt",
+            "terrain",
+        ],
+        "valid_ssp": ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"],
+        "valid_time_period": ["present", "future"],
+        "valid_depth": ["min", "mean", "max", "surf"],
+    }
 
     # Validate the provided arguments against valid values
     for arg in ("variables", "ssp", "time_period", "depth"):
-        _validate_argument(arg, eval(arg), eval(f"valid_{arg}"))
+        _validate_argument(arg, eval(arg), valid_args[f"valid_{arg}"])
 
     # Fetch the dataframe containing layer information
     _dataframe = _layer_dataframe(_include_allDatasets)
+
+    if search:
+        search_terms = search if isinstance(search, (tuple, list)) else (search,)
+        pattern = "|".join(re.escape(term) for term in search_terms)
+        searchable_columns = [
+            col
+            for col in ("datasetID", "title", "long_name", "standard_name")
+            if col in _dataframe.columns
+        ]
+        if not searchable_columns:
+            searchable_columns = ["datasetID"]
+
+        mask = pd.Series(False, index=_dataframe.index)
+        for col in searchable_columns:
+            mask = mask | _dataframe[col].str.contains(pattern, case=False, na=False)
+        _dataframe = _dataframe[mask]
 
     # Filter the resulting dataframe based on provided filters
     if variables:
@@ -197,6 +220,9 @@ def list_layers(
 
     # Convert to list if needed
     if dataframe:
+        # Simplify option
+        if simplify:
+            _dataframe = _dataframe[["datasetID", "title"]]
         return _dataframe.reset_index(drop=True)
     else:
         return _dataframe["datasetID"].to_list()

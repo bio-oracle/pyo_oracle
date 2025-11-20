@@ -7,4 +7,7 @@
 **/*.ini
 build/
 pyo_oracle/data
+.coverage
+coverage.*
+htmlcov/
 .venv/

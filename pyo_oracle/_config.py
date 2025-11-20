@@ -21,16 +21,17 @@ def create_config(default_config: dict = _default_config, path: str = None) -> N
     """
     config = configparser.ConfigParser()
     config["DEFAULT"] = default_config
-    if config_file.exists():
+    target_path = Path(path) if path else config_file
+    if target_path.exists():
         response = input(
-            f"Config file '{config_file}' already exists, overwrite it? y/N \n"
+            f"Config file '{target_path}' already exists, overwrite it? y/N \n"
         )
         if (response.lower() not in "y yes") or (not response):
             print("Operation cancelled.\n")
             return
-    with open(config_file, "w") as f:
+    with open(target_path, "w") as f:
         config.write(f)
-        print(f"Created configuration at '{config_file}'.")
+        print(f"Created configuration at '{target_path}'.")
 
 
 def _get_default_config() -> configparser.ConfigParser:
@@ -61,7 +62,7 @@ def get_config_path() -> Path:
     else:
         print("Config file doesn't exist, creating it.")
         create_config()
-        get_config_path()
+        return get_config_path()
 
 
 def print_config_values() -> None:
