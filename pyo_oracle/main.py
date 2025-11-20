@@ -1,6 +1,7 @@
 """
 Main module with library functions.
 """
+import re
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
@@ -95,6 +96,7 @@ def download_layers(
 @_format_args
 @lru_cache(8)
 def list_layers(
+    search: str or list = None,
     variables: str or list = None,
     ssp: str or list = None,
     time_period: str = None,
@@ -107,6 +109,7 @@ def list_layers(
     Lists available layers in the Bio-ORACLE server.
 
     Args:
+        search (str|list): Natural text search term, eg. 'Temperature', 'Oxygen'.
         variables (str|list): Variables to filter from. Valid values are ['po4','o2','si','ph','sws','phyc','so','thetao','dfe','no3','sithick','tas','siconc','chl','mlotst','clt','terrain'].
         ssp (str|list): Future scenario to choose from. Valid values are ['ssp119', 'ssp126', 'ssp370', 'ssp585', 'ssp460', 'ssp245', 'baseline'].
         time_period (str): Time period to choose from. Valid values are either 'present' or 'future'.
@@ -161,6 +164,22 @@ def list_layers(
 
     # Fetch the dataframe containing layer information
     _dataframe = _layer_dataframe(_include_allDatasets)
+
+    if search:
+        search_terms = search if isinstance(search, (tuple, list)) else (search,)
+        pattern = "|".join(re.escape(term) for term in search_terms)
+        searchable_columns = [
+            col
+            for col in ("datasetID", "title", "long_name", "standard_name")
+            if col in _dataframe.columns
+        ]
+        if not searchable_columns:
+            searchable_columns = ["datasetID"]
+
+        mask = pd.Series(False, index=_dataframe.index)
+        for col in searchable_columns:
+            mask = mask | _dataframe[col].str.contains(pattern, case=False, na=False)
+        _dataframe = _dataframe[mask]
 
     # Filter the resulting dataframe based on provided filters
     if variables:

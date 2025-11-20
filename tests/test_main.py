@@ -80,6 +80,14 @@ def test_list_layers():
     assert isinstance(layers_list, list)
     assert len(layers_list) > 0
 
+    # Test search
+    layers_search = pyo.list_layers(
+        search=["temperature"]
+    )
+    assert isinstance(layers_search, pd.DataFrame)
+    assert layers_search.empty is False
+    assert len(layers_search) < len(layers_df_all)
+
 
 def test_download_layers(layer, constraints, test_data_dir):
     pyo.download_layers(
