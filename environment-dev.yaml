@@ -6,3 +6,4 @@ dependencies:
   - httpx
   - ipython
   - pytest
+  - pytest-cov
