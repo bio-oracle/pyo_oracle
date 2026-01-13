@@ -2,17 +2,17 @@
 Utitilies and private methods that are used internally.
 """
 
+import logging
 from copy import deepcopy
 from datetime import datetime
-from functools import lru_cache, wraps
-import logging
+from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import httpx
 import pandas as pd
 
-from pyo_oracle._config import default_server, config
+from pyo_oracle._config import config, default_server
 
 
 def convert_bytes(num: float) -> str:
@@ -50,7 +50,7 @@ def _ensure_hashable(
 
 
 def _validate_argument(
-    name: str, value: Union[str, List[str], tuple], valid_values: List[str]
+    name: str, value: Union[str, List[str], Tuple[str]], valid_values: List[str]
 ) -> None:
     """
     Check if an argument is in a valid list of values.
