@@ -216,11 +216,11 @@ def list_layers(
 # Auxiliary function for caching.
 @lru_cache(maxsize=8)
 def _list_layers(
-    search: Tuple[Optional[str], ...] = None,
-    variables: Tuple[Optional[_Variable], ...] = None,
-    ssp: Tuple[Optional[_SSP], ...] = None,
-    time_period: Tuple[Optional[_TimePeriod], ...] = None,
-    depth: Tuple[Optional[_Depth], ...] = None,
+    search: Optional[Tuple[str, ...]] = None,
+    variables: Optional[Tuple[_Variable, ...]] = None,
+    ssp: Optional[Tuple[_SSP, ...]] = None,
+    time_period: Optional[Tuple[_TimePeriod, ...]] = None,
+    depth: Optional[Tuple[_Depth, ...]] = None,
     dataframe: bool = True,
     simplify: bool = False,
     _include_allDatasets: bool = False,
