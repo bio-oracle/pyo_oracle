@@ -72,12 +72,21 @@ def _validate_argument(
     Returns:
         None
     """
-    if value:
+    if value is None:
+        return
+
+    msg = "Selected {name} '{value}' is not a valid {name}. These are valid values:\n{valid_values}"
+
+    if isinstance(value, str):
+        if value.lower() not in valid_values:
+            print(msg.format(name=name, value=value, valid_values=valid_values))
+        return
+
+    if isinstance(value, Iterable):
         for v in value:
             if v.lower() not in valid_values:
-                print(
-                    f"Selected {name} '{v}' is not a valid {name}. These are valid values:\n{valid_values}"
-                )
+                print(msg.format(name=name, value=v, valid_values=valid_values))
+        return
 
 
 def _download_file_from_url(url: str, local_path: Path, **httpx_kwargs) -> Path:
