@@ -34,28 +34,19 @@ def convert_bytes(num: float) -> str:
         num /= 1024.0
 
 
-def _format_args(function):
+def _ensure_hashable(
+    value: Optional[Union[List[str], str]]
+) -> Optional[Tuple[str]]:
     """
-    Converts list/str to tuple.
-
-    This is used as we want functions to work on multiple items, but also want to allow users
-    to pass strings.
-
-    Prevent TypeError when passing list to function with lru_cache.
-
-    From: https://stackoverflow.com/questions/49210801/python3-pass-lists-to-function-with-functools-lru-cache
+    Ensure that the value is hashable.
     """
-
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        kwargs = {k: tuple(x) if type(x) == list else x for k, x in kwargs.items()}
-        kwargs = {k: (x,) if type(x) == str else x for k, x in kwargs.items()}
-        args = [tuple(x) if type(x) == list else x for x in args]
-        args = [(x,) if type(x) == str else x for x in args]
-        result = function(*args, **kwargs)
-        return result
-
-    return wrapper
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, list):
+        return tuple(value)
+    raise ValueError(f"Value {value} can not be transformed into a hashable tuple.")
 
 
 def _validate_argument(
