@@ -3,8 +3,9 @@ Module to handle configuration, such as data directory, etc.
 """
 import configparser
 from pathlib import Path
-from erddapy import ERDDAP
+from typing import Any, Dict
 
+from erddapy import ERDDAP
 
 _default_config = {
     "data_directory": str(Path(__file__).parent.joinpath("data/").absolute()),
@@ -15,7 +16,9 @@ _default_config = {
 config_file = Path(__file__).absolute().parent.joinpath(("config.ini"))
 
 
-def create_config(default_config: dict = _default_config, path: str = None) -> None:
+def create_config(
+    default_config: Dict[str, Any] = _default_config, path: str = None
+) -> None:
     """
     Creates the configuration file.
     """
@@ -81,7 +84,7 @@ def print_config_values() -> None:
     )
 
 
-def update_setting(key, value) -> None:
+def update_setting(key: str, value: Any) -> None:
     """
     Modifies a setting in the configuration file.
     """
