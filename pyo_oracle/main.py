@@ -196,19 +196,19 @@ def list_layers(
         # List layers for specific variables and future scenarios
         filtered_layers = list_layers(variables=['po4', 'o2'], ssp='ssp585', dataframe=True)
     """
-
-    # Validate the provided arguments against valid values
-    _valid_args = {
+    valid_args = {
         # With get_args, we get the list of valid arguments using the Literal type
         "valid_variables": get_args(_Variable),
         "valid_ssp": get_args(_SSP),
         "valid_time_period": get_args(_TimePeriod),
         "valid_depth": get_args(_Depth),
     }
+
+    # Validate the provided arguments against valid values
     names = ("variables", "ssp", "time_period", "depth")
     values = (variables, ssp, time_period, depth)
     for name, value in zip(names, values):
-        _validate_argument(name, value, _valid_args[f"valid_{name}"])
+        _validate_argument(name, value, valid_args[f"valid_{name}"])
 
     # Convert inputs into a hashable tuple for caching.
     # The main logic is defined in _list_layers.
