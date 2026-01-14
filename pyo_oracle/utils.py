@@ -203,7 +203,7 @@ def _layer_dataframe(include_allDatasets: bool = False) -> pd.DataFrame:
 
 
 def _download_layer(
-    dataset_id: Union[str, List[str]],
+    dataset_id: str,
     output_directory: Union[str, Path] = None,
     response: str = "nc",
     constraints: Optional[Dict] = None,
@@ -218,7 +218,7 @@ def _download_layer(
     Downloads a dataset layer.
 
     Args:
-        dataset_id (str or list): Dataset ID(s) to download. A single dataset ID or a list of IDs.
+        dataset_id (str): Dataset ID to download.
         output_directory (str or Path, optional): Directory where downloaded files will be saved. If not provided, the default directory will be used.
         response (str, optional): Format of the response to download. Default is "nc".
         constraints (dict, optional): Constraints to apply to the downloaded data.
