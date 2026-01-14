@@ -6,7 +6,18 @@ import re
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union, get_args, overload
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    get_args,
+    overload,
+)
 
 import pandas as pd
 
@@ -48,7 +59,7 @@ _Depth = Literal["min", "mean", "max", "surf"]
 
 
 def download_layers(
-    dataset_ids: Union[str, List[str]],
+    dataset_ids: Union[str, Iterable[str]],
     output_directory: Union[str, Path] = None,
     response: str = "nc",
     constraints: Dict[str, Any] = None,
@@ -123,11 +134,11 @@ def download_layers(
 # based on the argument dataframe=True/False.
 @overload
 def list_layers(
-    search: Optional[Union[str, List[str]]] = None,
-    variables: Optional[Union[_Variable, List[_Variable]]] = None,
-    ssp: Optional[Union[_SSP, List[_SSP]]] = None,
+    search: Optional[Union[str, Iterable[str]]] = None,
+    variables: Optional[Union[_Variable, Iterable[_Variable]]] = None,
+    ssp: Optional[Union[_SSP, Iterable[_SSP]]] = None,
     time_period: Optional[_TimePeriod] = None,
-    depth: Optional[Union[_Depth, List[_Depth]]] = None,
+    depth: Optional[Union[_Depth, Iterable[_Depth]]] = None,
     dataframe: Literal[True] = True,
     simplify: bool = False,
     _include_allDatasets: bool = False,
@@ -136,11 +147,11 @@ def list_layers(
 
 @overload
 def list_layers(
-    search: Optional[Union[str, List[str]]] = None,
-    variables: Optional[Union[_Variable, List[_Variable]]] = None,
-    ssp: Optional[Union[_SSP, List[_SSP]]] = None,
+    search: Optional[Union[str, Iterable[str]]] = None,
+    variables: Optional[Union[_Variable, Iterable[_Variable]]] = None,
+    ssp: Optional[Union[_SSP, Iterable[_SSP]]] = None,
     time_period: Optional[_TimePeriod] = None,
-    depth: Optional[Union[_Depth, List[_Depth]]] = None,
+    depth: Optional[Union[_Depth, Iterable[_Depth]]] = None,
     dataframe: Literal[False] = False,
     simplify: bool = False,
     _include_allDatasets: bool = False,
@@ -148,11 +159,11 @@ def list_layers(
 
 
 def list_layers(
-    search: Optional[Union[str, List[str]]] = None,
-    variables: Optional[Union[_Variable, List[_Variable]]] = None,
-    ssp: Optional[Union[_SSP, List[_SSP]]] = None,
+    search: Optional[Union[str, Iterable[str]]] = None,
+    variables: Optional[Union[_Variable, Iterable[_Variable]]] = None,
+    ssp: Optional[Union[_SSP, Iterable[_SSP]]] = None,
     time_period: Optional[_TimePeriod] = None,
-    depth: Optional[Union[_Depth, List[_Depth]]] = None,
+    depth: Optional[Union[_Depth, Iterable[_Depth]]] = None,
     dataframe: bool = True,
     simplify: bool = False,
     _include_allDatasets: bool = False,
@@ -292,7 +303,7 @@ def _list_layers(
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data(data_directory: Optional[str] = None, verbose: bool = True):
+def list_local_data(data_directory: Optional[Union[str, Path]] = None, verbose: bool = True):
     """
     Lists datasets that are locally downloaded.
 
@@ -318,14 +329,15 @@ def list_local_data(data_directory: Optional[str] = None, verbose: bool = True):
 
     verbose_print(f"Your data directory is '{data_directory}'.\n", verbose)
     verbose_print("Contents of data directory:", verbose)
-    files = glob(str(Path(config["data_directory"]).joinpath("*")))
+    files = glob(str(Path(data_directory).joinpath("*")))
     if not verbose:
         files = [f for f in files if not str(f).endswith(".log")]
     if files:
         for file in files:
+            file = Path(file)
             print(
-                "\t", Path(file).name, "\t", convert_bytes(Path(file).stat().st_size)
-            ) if verbose else print("\t", Path(file).name)
+                "\t", file.name, "\t", convert_bytes(file.stat().st_size)
+            ) if verbose else print("\t", file.name)
         print()
     else:
         print(f"Data directory at '{data_directory}' does not contain any data.")

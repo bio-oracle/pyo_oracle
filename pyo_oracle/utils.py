@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Container, Dict, Iterable, List, Optional, Tuple, Union
 
 import httpx
 import pandas as pd
@@ -35,7 +35,7 @@ def convert_bytes(num: float) -> str:
 
 
 def _ensure_hashable(
-    value: Optional[Union[List[str], str]]
+    value: Optional[Union[Iterable[str], str]]
 ) -> Optional[Tuple[str]]:
     """
     Ensure that the value is hashable.
@@ -44,21 +44,21 @@ def _ensure_hashable(
         return None
     if isinstance(value, str):
         return (value,)
-    if isinstance(value, list):
+    if isinstance(value, Iterable):
         return tuple(value)
     raise ValueError(f"Value {value} can not be transformed into a hashable tuple.")
 
 
 def _validate_argument(
-    name: str, value: Union[str, List[str], Tuple[str]], valid_values: List[str]
+    name: str, value: Union[str, Iterable[str]], valid_values: Container[str]
 ) -> None:
     """
     Check if an argument is in a valid list of values.
 
     Args:
         name (str): Name of the argument being validated.
-        value (str or list or tuple): Value(s) of the argument to validate.
-        valid_values (list): List of valid values for the argument.
+        value (str or iterable of str): Value(s) of the argument to validate.
+        valid_values (container of str): Container of valid values for the argument.
 
     Returns:
         None
@@ -131,8 +131,8 @@ def confirm(msg: str, cancel_msg: str = "Download cancelled.") -> bool:
 
 def _get_griddap_dataset_url(
     dataset_id: str,
-    variables: list = None,
-    constraints: dict = None,
+    variables: Optional[Container[str]] = None,
+    constraints: Optional[Dict[str, Any]] = None,
     response: str = "nc",
     verbose: bool = False,
 ) -> str:
@@ -141,8 +141,8 @@ def _get_griddap_dataset_url(
 
     Args:
         dataset_id (str): The ID of the dataset to download.
-        variables (list, optional): List of variable names to select.
-        constraints (dict, optional): Dictionary of constraints to apply.
+        variables (container of str, optional): Container of variable names to select.
+        constraints (dict[str, Any], optional): Dictionary of constraints to apply.
         response (str, optional): The response format. Default is "nc".
         verbose (bool, optional): If True, detailed information will be printed.
 
