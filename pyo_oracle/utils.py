@@ -45,7 +45,7 @@ def _ensure_hashable(
     if isinstance(value, str):
         return (value,)
     if isinstance(value, Iterable):
-        return tuple(value)
+        return tuple(sorted(value))
     raise ValueError(f"Value {value} cannot be transformed into a hashable tuple.")
 
 
