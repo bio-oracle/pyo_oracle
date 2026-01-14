@@ -1,8 +1,8 @@
 from pathlib import Path
 
-from erddapy import ERDDAP
 import pandas as pd
 import pytest
+from erddapy import ERDDAP
 
 import pyo_oracle as pyo
 
@@ -43,9 +43,9 @@ def test_list_layers():
 
     # Test variables
     layers_df_filter = pyo.list_layers(
-        variables=[
+        variables={
             "po4",
-        ]
+        }
     )
     assert isinstance(layers_df_filter, pd.DataFrame)
     assert layers_df_filter.empty is False
@@ -53,9 +53,9 @@ def test_list_layers():
 
     # Test ssp
     layers_df_filter = pyo.list_layers(
-        ssp=[
+        ssp=(
             "ssp119",
-        ]
+        )
     )
     assert isinstance(layers_df_filter, pd.DataFrame)
     assert layers_df_filter.empty is False
