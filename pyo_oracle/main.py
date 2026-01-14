@@ -329,15 +329,14 @@ def list_local_data(data_directory: Optional[Union[str, Path]] = None, verbose: 
 
     verbose_print(f"Your data directory is '{data_directory}'.\n", verbose)
     verbose_print("Contents of data directory:", verbose)
-    files = glob(str(Path(data_directory).joinpath("*")))
+    files = glob(str(Path(config["data_directory"]).joinpath("*")))
     if not verbose:
         files = [f for f in files if not str(f).endswith(".log")]
     if files:
         for file in files:
-            file = Path(file)
             print(
-                "\t", file.name, "\t", convert_bytes(file.stat().st_size)
-            ) if verbose else print("\t", file.name)
+                "\t", Path(file).name, "\t", convert_bytes(Path(file).stat().st_size)
+            ) if verbose else print("\t", Path(file).name)
         print()
     else:
         print(f"Data directory at '{data_directory}' does not contain any data.")
