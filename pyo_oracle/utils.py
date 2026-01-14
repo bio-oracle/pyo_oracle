@@ -36,7 +36,7 @@ def convert_bytes(num: float) -> str:
 
 def _ensure_hashable(
     value: Optional[Union[Iterable[str], str]]
-) -> Optional[Tuple[str]]:
+) -> Optional[Tuple[str, ...]]:
     """
     Ensure that the value is hashable.
     """
