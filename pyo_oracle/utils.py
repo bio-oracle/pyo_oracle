@@ -206,7 +206,7 @@ def _download_layer(
     dataset_id: str,
     output_directory: Union[str, Path] = None,
     response: str = "nc",
-    constraints: Optional[Dict] = None,
+    constraints: Optional[Dict[str, Any]] = None,
     skip_confirmation: Optional[bool] = None,
     verbose: bool = True,
     log: bool = True,
