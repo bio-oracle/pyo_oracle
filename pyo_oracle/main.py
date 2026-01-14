@@ -33,7 +33,7 @@ from pyo_oracle.utils import (
 )
 
 # Literal typing for type checking and validation (using _validate_argument)
-_Variable = Literal[
+Variable = Literal[
     "chl",
     "clt",
     "dfe",
@@ -53,9 +53,9 @@ _Variable = Literal[
     "terrain",
     "thetao",
 ]
-_SSP = Literal["ssp119", "ssp126", "ssp245", "ssp370", "ssp460", "ssp585", "baseline"]
-_TimePeriod = Literal["present", "future"]
-_Depth = Literal["min", "mean", "max", "surf"]
+SSP = Literal["ssp119", "ssp126", "ssp245", "ssp370", "ssp460", "ssp585", "baseline"]
+TimePeriod = Literal["present", "future"]
+Depth = Literal["min", "mean", "max", "surf"]
 
 
 def download_layers(
@@ -135,10 +135,10 @@ def download_layers(
 @overload
 def list_layers(
     search: Optional[Union[str, Iterable[str]]] = None,
-    variables: Optional[Union[_Variable, Iterable[_Variable]]] = None,
-    ssp: Optional[Union[_SSP, Iterable[_SSP]]] = None,
-    time_period: Optional[_TimePeriod] = None,
-    depth: Optional[Union[_Depth, Iterable[_Depth]]] = None,
+    variables: Optional[Union[Variable, Iterable[Variable]]] = None,
+    ssp: Optional[Union[SSP, Iterable[SSP]]] = None,
+    time_period: Optional[TimePeriod] = None,
+    depth: Optional[Union[Depth, Iterable[Depth]]] = None,
     dataframe: Literal[True] = True,
     simplify: bool = False,
     _include_allDatasets: bool = False,
@@ -148,10 +148,10 @@ def list_layers(
 @overload
 def list_layers(
     search: Optional[Union[str, Iterable[str]]] = None,
-    variables: Optional[Union[_Variable, Iterable[_Variable]]] = None,
-    ssp: Optional[Union[_SSP, Iterable[_SSP]]] = None,
-    time_period: Optional[_TimePeriod] = None,
-    depth: Optional[Union[_Depth, Iterable[_Depth]]] = None,
+    variables: Optional[Union[Variable, Iterable[Variable]]] = None,
+    ssp: Optional[Union[SSP, Iterable[SSP]]] = None,
+    time_period: Optional[TimePeriod] = None,
+    depth: Optional[Union[Depth, Iterable[Depth]]] = None,
     dataframe: Literal[False] = False,
     simplify: bool = False,
     _include_allDatasets: bool = False,
@@ -160,10 +160,10 @@ def list_layers(
 
 def list_layers(
     search: Optional[Union[str, Iterable[str]]] = None,
-    variables: Optional[Union[_Variable, Iterable[_Variable]]] = None,
-    ssp: Optional[Union[_SSP, Iterable[_SSP]]] = None,
-    time_period: Optional[_TimePeriod] = None,
-    depth: Optional[Union[_Depth, Iterable[_Depth]]] = None,
+    variables: Optional[Union[Variable, Iterable[Variable]]] = None,
+    ssp: Optional[Union[SSP, Iterable[SSP]]] = None,
+    time_period: Optional[TimePeriod] = None,
+    depth: Optional[Union[Depth, Iterable[Depth]]] = None,
     dataframe: bool = True,
     simplify: bool = False,
     _include_allDatasets: bool = False,
@@ -198,10 +198,10 @@ def list_layers(
     """
     valid_args = {
         # With get_args, we get the list of valid arguments using the Literal type
-        "valid_variables": get_args(_Variable),
-        "valid_ssp": get_args(_SSP),
-        "valid_time_period": get_args(_TimePeriod),
-        "valid_depth": get_args(_Depth),
+        "valid_variables": get_args(Variable),
+        "valid_ssp": get_args(SSP),
+        "valid_time_period": get_args(TimePeriod),
+        "valid_depth": get_args(Depth),
     }
 
     # Validate the provided arguments against valid values
@@ -228,10 +228,10 @@ def list_layers(
 @lru_cache(maxsize=8)
 def _list_layers(
     search: Optional[Tuple[str, ...]] = None,
-    variables: Optional[Tuple[_Variable, ...]] = None,
-    ssp: Optional[Tuple[_SSP, ...]] = None,
-    time_period: Optional[Tuple[_TimePeriod, ...]] = None,
-    depth: Optional[Tuple[_Depth, ...]] = None,
+    variables: Optional[Tuple[Variable, ...]] = None,
+    ssp: Optional[Tuple[SSP, ...]] = None,
+    time_period: Optional[Tuple[TimePeriod, ...]] = None,
+    depth: Optional[Tuple[Depth, ...]] = None,
     dataframe: bool = True,
     simplify: bool = False,
     _include_allDatasets: bool = False,
