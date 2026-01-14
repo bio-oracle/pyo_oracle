@@ -7,7 +7,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Container, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Container, Dict, Iterable, Optional, Tuple, Union
 
 import httpx
 import pandas as pd
