@@ -230,7 +230,7 @@ def _list_layers(
     search: Optional[Tuple[str, ...]] = None,
     variables: Optional[Tuple[_Variable, ...]] = None,
     ssp: Optional[Tuple[_SSP, ...]] = None,
-    time_period: Optional[Tuple[_TimePeriod]] = None,
+    time_period: Optional[Tuple[_TimePeriod, ...]] = None,
     depth: Optional[Tuple[_Depth, ...]] = None,
     dataframe: bool = True,
     simplify: bool = False,
