@@ -46,7 +46,7 @@ def _ensure_hashable(
         return (value,)
     if isinstance(value, Iterable):
         return tuple(value)
-    raise ValueError(f"Value {value} can not be transformed into a hashable tuple.")
+    raise ValueError(f"Value {value} cannot be transformed into a hashable tuple.")
 
 
 def _validate_argument(
