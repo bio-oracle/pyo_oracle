@@ -50,7 +50,7 @@ def _ensure_hashable(
 
 
 def _validate_argument(
-    name: str, value: Union[str, Iterable[str]], valid_values: Container[str]
+    name: str, value: Optional[Union[str, Iterable[str]]], valid_values: Container[str]
 ) -> None:
     """
     Check if an argument is in a valid list of values.
@@ -204,7 +204,7 @@ def _layer_dataframe(include_allDatasets: bool = False) -> pd.DataFrame:
 
 def _download_layer(
     dataset_id: str,
-    output_directory: Union[str, Path] = None,
+    output_directory: Optional[Union[str, Path]] = None,
     response: str = "nc",
     constraints: Optional[Dict[str, Any]] = None,
     skip_confirmation: Optional[bool] = None,
@@ -232,6 +232,7 @@ def _download_layer(
     Returns:
         None
     """
+    # NOTE: The timestamp defined in the arguments is not used and is overwritten by the timestamp generated here
     timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     filename = (
         f"{dataset_id}_{timestamp}.{response}"

@@ -60,10 +60,10 @@ _Depth = Literal["min", "mean", "max", "surf"]
 
 def download_layers(
     dataset_ids: Union[str, Iterable[str]],
-    output_directory: Union[str, Path] = None,
+    output_directory: Optional[Union[str, Path]] = None,
     response: str = "nc",
-    constraints: Dict[str, Any] = None,
-    skip_confirmation: bool = None,
+    constraints: Optional[Dict[str, Any]] = None,
+    skip_confirmation: Optional[bool] = None,
     verbose: bool = True,
     log: bool = True,
     timestamp: bool = True,
