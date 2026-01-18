@@ -232,10 +232,9 @@ def _download_layer(
     Returns:
         None
     """
-    # NOTE: The timestamp defined in the arguments is not used and is overwritten by the timestamp generated here
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    _timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     filename = (
-        f"{dataset_id}_{timestamp}.{response}"
+        f"{dataset_id}_{_timestamp}.{response}"
         if timestamp
         else f"{dataset_id}.{response}"
     )
