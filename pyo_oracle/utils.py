@@ -1,5 +1,5 @@
 """
-Utitilies and private methods that are used internally.
+Utilities and private methods that are used internally.
 """
 
 import logging
