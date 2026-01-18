@@ -9,7 +9,7 @@ import pyo_oracle
 # List available layers in the Bio-ORACLE server
 pyo_oracle.list_layers()
 
-# Define constraints and download a layer
+# Define constraints and download a layer (the full layer is a large file)
 constraints = {
     "time>=": "2000-01-01T00:00:00Z",
     "time<=": "2010-01-01T12:00:00Z",
