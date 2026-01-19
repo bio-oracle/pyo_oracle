@@ -1,18 +1,18 @@
 """
-Utitilies and private methods that are used internally.
+Utilities and private methods that are used internally.
 """
 
+import logging
 from copy import deepcopy
 from datetime import datetime
-from functools import lru_cache, wraps
-import logging
+from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Container, Dict, Iterable, Optional, Tuple, Union
 
 import httpx
 import pandas as pd
 
-from pyo_oracle._config import default_server, config
+from pyo_oracle._config import config, default_server
 
 
 def convert_bytes(num: float) -> str:
@@ -34,50 +34,50 @@ def convert_bytes(num: float) -> str:
         num /= 1024.0
 
 
-def _format_args(function):
+def _ensure_hashable(
+    value: Optional[Union[Iterable[str], str]]
+) -> Optional[Tuple[str, ...]]:
     """
-    Converts list/str to tuple.
-
-    This is used as we want functions to work on multiple items, but also want to allow users
-    to pass strings.
-
-    Prevent TypeError when passing list to function with lru_cache.
-
-    From: https://stackoverflow.com/questions/49210801/python3-pass-lists-to-function-with-functools-lru-cache
+    Ensure that the value is hashable.
     """
-
-    @wraps(function)
-    def wrapper(*args, **kwargs):
-        kwargs = {k: tuple(x) if type(x) == list else x for k, x in kwargs.items()}
-        kwargs = {k: (x,) if type(x) == str else x for k, x in kwargs.items()}
-        args = [tuple(x) if type(x) == list else x for x in args]
-        args = [(x,) if type(x) == str else x for x in args]
-        result = function(*args, **kwargs)
-        return result
-
-    return wrapper
+    if value is None:
+        return None
+    if isinstance(value, str):
+        return (value,)
+    if isinstance(value, Iterable):
+        return tuple(sorted(value))
+    raise ValueError(f"Value {value} cannot be transformed into a hashable tuple.")
 
 
 def _validate_argument(
-    name: str, value: Union[str, List[str], tuple], valid_values: List[str]
+    name: str, value: Optional[Union[str, Iterable[str]]], valid_values: Container[str]
 ) -> None:
     """
     Check if an argument is in a valid list of values.
 
     Args:
         name (str): Name of the argument being validated.
-        value (str or list or tuple): Value(s) of the argument to validate.
-        valid_values (list): List of valid values for the argument.
+        value (str or iterable of str): Value(s) of the argument to validate.
+        valid_values (container of str): Container of valid values for the argument.
 
     Returns:
         None
     """
-    if value:
+    if value is None:
+        return
+
+    msg = "Selected {name} '{value}' is not a valid {name}. These are valid values:\n{valid_values}"
+
+    if isinstance(value, str):
+        if value.lower() not in valid_values:
+            print(msg.format(name=name, value=value, valid_values=valid_values))
+        return
+
+    if isinstance(value, Iterable):
         for v in value:
             if v.lower() not in valid_values:
-                print(
-                    f"Selected {name} '{v}' is not a valid {name}. These are valid values:\n{valid_values}"
-                )
+                print(msg.format(name=name, value=v, valid_values=valid_values))
+        return
 
 
 def _download_file_from_url(url: str, local_path: Path, **httpx_kwargs) -> Path:
@@ -131,8 +131,8 @@ def confirm(msg: str, cancel_msg: str = "Download cancelled.") -> bool:
 
 def _get_griddap_dataset_url(
     dataset_id: str,
-    variables: list = None,
-    constraints: dict = None,
+    variables: Optional[Container[str]] = None,
+    constraints: Optional[Dict[str, Any]] = None,
     response: str = "nc",
     verbose: bool = False,
 ) -> str:
@@ -141,8 +141,8 @@ def _get_griddap_dataset_url(
 
     Args:
         dataset_id (str): The ID of the dataset to download.
-        variables (list, optional): List of variable names to select.
-        constraints (dict, optional): Dictionary of constraints to apply.
+        variables (container of str, optional): Container of variable names to select.
+        constraints (dict[str, Any], optional): Dictionary of constraints to apply.
         response (str, optional): The response format. Default is "nc".
         verbose (bool, optional): If True, detailed information will be printed.
 
@@ -203,10 +203,10 @@ def _layer_dataframe(include_allDatasets: bool = False) -> pd.DataFrame:
 
 
 def _download_layer(
-    dataset_id: Union[str, List[str]],
-    output_directory: Union[str, Path] = None,
+    dataset_id: str,
+    output_directory: Optional[Union[str, Path]] = None,
     response: str = "nc",
-    constraints: Optional[Dict] = None,
+    constraints: Optional[Dict[str, Any]] = None,
     skip_confirmation: Optional[bool] = None,
     verbose: bool = True,
     log: bool = True,
@@ -218,7 +218,7 @@ def _download_layer(
     Downloads a dataset layer.
 
     Args:
-        dataset_id (str or list): Dataset ID(s) to download. A single dataset ID or a list of IDs.
+        dataset_id (str): Dataset ID to download.
         output_directory (str or Path, optional): Directory where downloaded files will be saved. If not provided, the default directory will be used.
         response (str, optional): Format of the response to download. Default is "nc".
         constraints (dict, optional): Constraints to apply to the downloaded data.
@@ -232,9 +232,9 @@ def _download_layer(
     Returns:
         None
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    _timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     filename = (
-        f"{dataset_id}_{timestamp}.{response}"
+        f"{dataset_id}_{_timestamp}.{response}"
         if timestamp
         else f"{dataset_id}.{response}"
     )

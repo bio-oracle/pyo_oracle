@@ -1,32 +1,69 @@
 """
 Main module with library functions.
 """
+
 import re
 from functools import lru_cache
 from glob import glob
 from pathlib import Path
-from typing import Optional, Union, List, Dict
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    Union,
+    get_args,
+    overload,
+)
 
 import pandas as pd
 
 from pyo_oracle._config import config
 from pyo_oracle.utils import (
-    _format_args,
     _download_layer,
-    _validate_argument,
+    _ensure_hashable,
     _layer_dataframe,
-    verbose_print,
-    convert_bytes,
+    _validate_argument,
     confirm,
+    convert_bytes,
+    verbose_print,
 )
+
+# Literal typing for type checking and validation (using _validate_argument)
+Variable = Literal[
+    "chl",
+    "clt",
+    "dfe",
+    "mlotst",
+    "no3",
+    "o2",
+    "ph",
+    "phyc",
+    "po4",
+    "si",
+    "siconc",
+    "sithick",
+    "so",
+    "swd",
+    "sws",
+    "tas",
+    "terrain",
+    "thetao",
+]
+SSP = Literal["ssp119", "ssp126", "ssp245", "ssp370", "ssp460", "ssp585", "baseline"]
+TimePeriod = Literal["present", "future"]
+Depth = Literal["min", "mean", "max", "surf"]
 
 
 def download_layers(
-    dataset_ids: Union[str, List[str]],
-    output_directory: Union[str, Path] = None,
+    dataset_ids: Union[str, Iterable[str]],
+    output_directory: Optional[Union[str, Path]] = None,
     response: str = "nc",
-    constraints: Dict = None,
-    skip_confirmation: bool = None,
+    constraints: Optional[Dict[str, Any]] = None,
+    skip_confirmation: Optional[bool] = None,
     verbose: bool = True,
     log: bool = True,
     timestamp: bool = True,
@@ -93,18 +130,44 @@ def download_layers(
         )
 
 
-@_format_args
-@lru_cache(8)
+# With overloading, we can match the different results of the function
+# based on the argument dataframe=True/False.
+@overload
 def list_layers(
-    search: str or list = None,
-    variables: str or list = None,
-    ssp: str or list = None,
-    time_period: str = None,
-    depth: str or list = None,
-    dataframe: bool = True,
-    simplify = False,
+    search: Optional[Union[str, Iterable[str]]] = None,
+    variables: Optional[Union[Variable, Iterable[Variable]]] = None,
+    ssp: Optional[Union[SSP, Iterable[SSP]]] = None,
+    time_period: Optional[TimePeriod] = None,
+    depth: Optional[Union[Depth, Iterable[Depth]]] = None,
+    dataframe: Literal[True] = True,
+    simplify: bool = False,
     _include_allDatasets: bool = False,
-) -> pd.DataFrame or list:
+) -> pd.DataFrame: ...
+
+
+@overload
+def list_layers(
+    search: Optional[Union[str, Iterable[str]]] = None,
+    variables: Optional[Union[Variable, Iterable[Variable]]] = None,
+    ssp: Optional[Union[SSP, Iterable[SSP]]] = None,
+    time_period: Optional[TimePeriod] = None,
+    depth: Optional[Union[Depth, Iterable[Depth]]] = None,
+    dataframe: Literal[False] = False,
+    simplify: bool = False,
+    _include_allDatasets: bool = False,
+) -> List[str]: ...
+
+
+def list_layers(
+    search: Optional[Union[str, Iterable[str]]] = None,
+    variables: Optional[Union[Variable, Iterable[Variable]]] = None,
+    ssp: Optional[Union[SSP, Iterable[SSP]]] = None,
+    time_period: Optional[TimePeriod] = None,
+    depth: Optional[Union[Depth, Iterable[Depth]]] = None,
+    dataframe: bool = True,
+    simplify: bool = False,
+    _include_allDatasets: bool = False,
+) -> Union[pd.DataFrame, List[str]]:
     """
     Lists available layers in the Bio-ORACLE server.
 
@@ -134,33 +197,45 @@ def list_layers(
         filtered_layers = list_layers(variables=['po4', 'o2'], ssp='ssp585', dataframe=True)
     """
     valid_args = {
-        "valid_variables": [
-            "po4",
-            "o2",
-            "si",
-            "ph",
-            "sws",
-            "phyc",
-            "so",
-            "thetao",
-            "dfe",
-            "no3",
-            "sithick",
-            "tas",
-            "siconc",
-            "chl",
-            "mlotst",
-            "clt",
-            "terrain",
-        ],
-        "valid_ssp": ["ssp119", "ssp126", "ssp370", "ssp585", "ssp460", "ssp245", "baseline"],
-        "valid_time_period": ["present", "future"],
-        "valid_depth": ["min", "mean", "max", "surf"],
+        # With get_args, we get the list of valid arguments using the Literal type
+        "valid_variables": get_args(Variable),
+        "valid_ssp": get_args(SSP),
+        "valid_time_period": get_args(TimePeriod),
+        "valid_depth": get_args(Depth),
     }
 
     # Validate the provided arguments against valid values
-    for arg in ("variables", "ssp", "time_period", "depth"):
-        _validate_argument(arg, eval(arg), valid_args[f"valid_{arg}"])
+    names = ("variables", "ssp", "time_period", "depth")
+    values = (variables, ssp, time_period, depth)
+    for name, value in zip(names, values):
+        _validate_argument(name, value, valid_args[f"valid_{name}"])
+
+    # Convert inputs into a hashable tuple for caching.
+    # The main logic is defined in _list_layers.
+    return _list_layers(
+        _ensure_hashable(search),
+        _ensure_hashable(variables),
+        _ensure_hashable(ssp),
+        _ensure_hashable(time_period),
+        _ensure_hashable(depth),
+        dataframe,
+        simplify,
+        _include_allDatasets,
+    )
+
+
+# Auxiliary function for caching.
+@lru_cache(maxsize=8)
+def _list_layers(
+    search: Optional[Tuple[str, ...]] = None,
+    variables: Optional[Tuple[Variable, ...]] = None,
+    ssp: Optional[Tuple[SSP, ...]] = None,
+    time_period: Optional[Tuple[TimePeriod, ...]] = None,
+    depth: Optional[Tuple[Depth, ...]] = None,
+    dataframe: bool = True,
+    simplify: bool = False,
+    _include_allDatasets: bool = False,
+) -> Union[pd.DataFrame, List[str]]:
 
     # Fetch the dataframe containing layer information
     _dataframe = _layer_dataframe(_include_allDatasets)
@@ -228,7 +303,7 @@ def list_layers(
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data(data_directory: Optional[str] = None, verbose: bool = True):
+def list_local_data(data_directory: Optional[Union[str, Path]] = None, verbose: bool = True):
     """
     Lists datasets that are locally downloaded.
 
