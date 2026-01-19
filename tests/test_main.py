@@ -43,7 +43,8 @@ class TestListLayers:
         """Fixture to fetch all layers once for the class."""
         return pyo.list_layers()
 
-    def test_simple_call(self, all_layers: pd.DataFrame):
+    def test_simple_call(self):
+        all_layers = pyo.list_layers()
         assert isinstance(all_layers, pd.DataFrame)
         assert not all_layers.empty
 
@@ -80,6 +81,7 @@ class TestListLayers:
         )
         assert isinstance(layers_list, list)
         assert len(layers_list) > 0
+        assert all(isinstance(layer, str) for layer in layers_list)
 
     def test_search_query(self, all_layers: pd.DataFrame):
         df = pyo.list_layers(search=["temperature"])
@@ -96,8 +98,8 @@ class TestListLayers:
         df1 = pyo.list_layers(variables=["po4", "chl"], ssp=["ssp119", "ssp126"])
         df2 = pyo.list_layers(variables=("po4", "chl"), ssp=("ssp119", "ssp126"))
         df3 = pyo.list_layers(variables={"po4", "chl"}, ssp={"ssp119", "ssp126"})
-        assert df1 is df2  # Same object for caching
-        assert df1 is df3  # Same object for caching
+        assert df1 is df2
+        assert df1 is df3
 
 
 def test_download_layers(layer, constraints, test_data_dir):
