@@ -35,58 +35,69 @@ def layer():
     return layer
 
 
-def test_list_layers():
-    # Simple call
-    layers_df_all = pyo.list_layers()
-    assert isinstance(layers_df_all, pd.DataFrame)
-    assert layers_df_all.empty is False
+class TestListLayers:
+    """Tests for the `pyo.list_layers` function with various filters."""
 
-    # Test variables
-    layers_df_filter = pyo.list_layers(
-        variables={
-            "po4",
-        }
-    )
-    assert isinstance(layers_df_filter, pd.DataFrame)
-    assert layers_df_filter.empty is False
-    assert len(layers_df_filter) < len(layers_df_all)
+    @pytest.fixture(scope="class")
+    def all_layers(self) -> pd.DataFrame:
+        """Fixture to fetch all layers once for the class."""
+        return pyo.list_layers()
 
-    # Test ssp
-    layers_df_filter = pyo.list_layers(
-        ssp=(
-            "ssp119",
+    def test_simple_call(self, all_layers: pd.DataFrame):
+        assert isinstance(all_layers, pd.DataFrame)
+        assert not all_layers.empty
+
+    def test_filter_variables(self, all_layers: pd.DataFrame):
+        df = pyo.list_layers(variables=["po4"])
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert len(df) < len(all_layers)
+
+    def test_filter_ssp(self, all_layers: pd.DataFrame):
+        df = pyo.list_layers(ssp=["ssp119"])
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert len(df) < len(all_layers)
+
+    def test_filter_time_period(self, all_layers: pd.DataFrame):
+        df = pyo.list_layers(time_period="present")
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert len(df) < len(all_layers)
+
+    def test_filter_depth(self, all_layers: pd.DataFrame):
+        df = pyo.list_layers(depth=["mean", "surf"], simplify=True)
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert len(df) < len(all_layers)
+
+    def test_return_list(self):
+        layers_list = pyo.list_layers(
+            variables="po4",
+            ssp=["ssp119", "ssp126"],
+            time_period="future",
+            dataframe=False,
         )
-    )
-    assert isinstance(layers_df_filter, pd.DataFrame)
-    assert layers_df_filter.empty is False
-    assert len(layers_df_filter) < len(layers_df_all)
+        assert isinstance(layers_list, list)
+        assert len(layers_list) > 0
 
-    # Test time
-    layers_df_filter = pyo.list_layers(time_period="present")
-    assert isinstance(layers_df_filter, pd.DataFrame)
-    assert layers_df_filter.empty is False
-    assert len(layers_df_filter) < len(layers_df_all)
+    def test_search_query(self, all_layers: pd.DataFrame):
+        df = pyo.list_layers(search=["temperature"])
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert len(df) < len(all_layers)
 
-    # Test depth
-    layers_df_filter = pyo.list_layers(depth=["mean", "surf"], simplify=True)
-    assert isinstance(layers_df_filter, pd.DataFrame)
-    assert layers_df_filter.empty is False
-    assert len(layers_df_filter) < len(layers_df_all)
+    def test_caching_order_independence(self):
+        df1 = pyo.list_layers(variables=["po4", "chl"], ssp=["ssp119", "ssp126"])
+        df2 = pyo.list_layers(variables=["chl", "po4"], ssp=["ssp126", "ssp119"])
+        assert df1 is df2  # Same object for caching
 
-    # Test list
-    layers_list = pyo.list_layers(
-        variables="po4", ssp=["ssp119", "ssp126"], time_period="future", dataframe=False
-    )
-    assert isinstance(layers_list, list)
-    assert len(layers_list) > 0
-
-    # Test search
-    layers_search = pyo.list_layers(
-        search=["temperature"]
-    )
-    assert isinstance(layers_search, pd.DataFrame)
-    assert layers_search.empty is False
-    assert len(layers_search) < len(layers_df_all)
+    def test_iterable_type_independence(self):
+        df1 = pyo.list_layers(variables=["po4", "chl"], ssp=["ssp119", "ssp126"])
+        df2 = pyo.list_layers(variables=("po4", "chl"), ssp=("ssp119", "ssp126"))
+        df3 = pyo.list_layers(variables={"po4", "chl"}, ssp={"ssp119", "ssp126"})
+        assert df1 is df2  # Same object for caching
+        assert df1 is df3  # Same object for caching
 
 
 def test_download_layers(layer, constraints, test_data_dir):
@@ -99,7 +110,7 @@ def test_download_layers(layer, constraints, test_data_dir):
     )
 
 
-def test_list_local_data():
+def test_list_local_data(test_data_dir):
     pyo.list_local_data(
         test_data_dir,
     )
