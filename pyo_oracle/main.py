@@ -270,7 +270,7 @@ def _list_layers(
             for col in ("datasetID", "title", "long_name", "standard_name")
             if col in _dataframe.columns
         ]
-        if not searchable_columns:
+        if not searchable_columns:  # pragma: no cover - defensive; server always returns datasetID
             searchable_columns = ["datasetID"]
 
         mask = pd.Series(False, index=_dataframe.index)

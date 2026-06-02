@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - Unreleased
+
+### Tests
+
+- Greatly expanded the test suite with offline unit tests that mock the network
+  boundary (`_build_griddap_server`, `_layer_info`, `_download_file_from_url`,
+  `_layer_dataframe`). Total coverage rose from 85% to ~99%, and the
+  network-free `list_layers` filtering, config error paths, `build_constraints`
+  validation, and download flows are now covered without hitting the server.
+- CI enforces a minimum coverage of 90% on the offline test run.
+
 ## [1.0.0] - 2026-06-02
 
 First stable release. Modernizes dependencies, reaches feature parity with the
