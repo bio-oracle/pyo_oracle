@@ -6,8 +6,11 @@
 **/.DS_Store
 **/*.ini
 build/
+dist/
 pyo_oracle/data
 .coverage
 coverage.*
 htmlcov/
 .venv/
+.pytest_cache/
+site/

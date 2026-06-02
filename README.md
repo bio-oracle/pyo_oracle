@@ -1,40 +1,82 @@
 # pyo_oracle
-## Python interface for the Bio-ORACLE ERDDAP server
 
-### Quick start
+**Python client for the [Bio-ORACLE](https://bio-oracle.org/) ERDDAP server.**
 
-```python
-import pyo_oracle
+Discover, inspect, subset, download, and load Bio-ORACLE marine environmental
+layers (temperature, salinity, nutrients, sea ice, and more) from Python.
+`pyo_oracle` is the Python counterpart of the R package
+[`biooracler`](https://github.com/bio-oracle/biooracler) and is built on
+[`erddapy`](https://github.com/ioos/erddapy).
 
-# List available layers in the Bio-ORACLE server
-pyo_oracle.list_layers()
+📖 **Documentation:** <https://bio-oracle.github.io/pyo_oracle/>
 
-# Define constraints and download a layer (the full layer is a large file)
-constraints = {
-    "time>=": "2000-01-01T00:00:00Z",
-    "time<=": "2010-01-01T12:00:00Z",
-    "time_step": 100,
-    "latitude>=": 0,
-    "latitude<=": 10,
-    "latitude_step": 100,
-    "longitude>=": 0,
-    "longitude<=": 10,
-    "longitude_step": 1
-}
-pyo_oracle.download_layers("thetao_baseline_2000_2019_depthsurf", constraints=constraints)
-
-# See local data
-pyo_oracle.list_local_data()
-```
-
-### Installation
+## Installation
 
 ```bash
+# With pip
+pip install pyo-oracle
+
+# Load layers as xarray (optional extra)
+pip install "pyo-oracle[xarray]"
+
 # With conda
 conda create -n pyo_oracle conda-forge::pyo-oracle
-
-# or with pip
-pip install pyo-oracle
 ```
 
-Please open an issue if you experience any problems. More documentation coming soon!
+## Quick start
+
+```python
+import pyo_oracle as pyo
+
+# 1. List available layers (filter by search term, variable, scenario, depth, ...)
+pyo.list_layers(search="Temperature")
+
+# 2. Inspect a layer: dimension ranges + variables and units
+pyo.info_layer("thetao_baseline_2000_2019_depthsurf")
+
+# 3. Build constraints from friendly bounds (no hand-written dicts)
+constraints = pyo.build_constraints(
+    "thetao_baseline_2000_2019_depthsurf",
+    time=("2000-01-01T00:00:00Z", "2010-01-01T00:00:00Z"),
+    latitude=(0, 10),
+    longitude=(0, 10),
+)
+
+# 4a. Load directly into memory (pandas or xarray)
+df = pyo.load_layer(
+    "thetao_baseline_2000_2019_depthsurf",
+    constraints=constraints,
+    variables=["thetao_mean"],
+)
+ds = pyo.load_layer(
+    "thetao_baseline_2000_2019_depthsurf",
+    constraints=constraints,
+    fmt="xarray",
+)
+
+# 4b. Or download to a file (NetCDF by default)
+pyo.download_layers(
+    "thetao_baseline_2000_2019_depthsurf",
+    constraints=constraints,
+    variables=["thetao_mean"],
+)
+
+# 5. See local data
+pyo.list_local_data()
+```
+
+## Key functions
+
+| Function | Purpose |
+|----------|---------|
+| `list_layers` | List/filter available layers |
+| `info_layer` | Inspect a layer's dimensions and variables |
+| `build_constraints` | Build griddap constraints from `(min, max)` bounds + strides |
+| `load_layer` | Load a layer into memory (`pandas` or `xarray`) |
+| `download_layers` | Download a layer (NetCDF/CSV), optionally a variable subset |
+| `list_local_data` | List downloaded files |
+
+## Contributing
+
+See [`CLAUDE.md`](CLAUDE.md) for the dev setup, testing, and release flow.
+Please open an issue if you experience any problems.
