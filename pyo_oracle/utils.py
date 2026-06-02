@@ -3,6 +3,7 @@ Utilities and private methods that are used internally.
 """
 
 import logging
+import warnings
 from copy import deepcopy
 from datetime import datetime
 from functools import lru_cache
@@ -102,8 +103,16 @@ def _download_file_from_url(url: str, local_path: Path, **httpx_kwargs) -> Path:
 
 
 # Small helpers
-verbose_print = lambda message, verbose: print(message) if verbose else None
-info_logger = lambda msg, log: logging.info(msg) if log else None
+def verbose_print(message: Any, verbose: bool) -> None:
+    """Print ``message`` only when ``verbose`` is True."""
+    if verbose:
+        print(message)
+
+
+def info_logger(msg: Any, log: bool) -> None:
+    """Log ``msg`` at INFO level only when ``log`` is True."""
+    if log:
+        logging.info(msg)
 
 
 def confirm(msg: str, cancel_msg: str = "Download cancelled.") -> bool:
@@ -129,6 +138,80 @@ def confirm(msg: str, cancel_msg: str = "Download cancelled.") -> bool:
         return False
 
 
+def _as_bool(value: Any) -> bool:
+    """
+    Safely coerce a config/CLI value to a boolean.
+
+    Replaces the previous ``eval(...)`` based parsing, which was unsafe and
+    failed on values such as the string ``"false"``.
+
+    Args:
+        value: A value that may be a bool, or a string such as "True"/"false"/"1".
+
+    Returns:
+        bool: The parsed boolean value.
+    """
+    if isinstance(value, bool):
+        return value
+    if value is None:
+        return False
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return str(value).strip().lower() in {"true", "1", "yes", "y", "on"}
+
+
+def _build_griddap_server(
+    dataset_id: str,
+    variables: Optional[Container[str]] = None,
+    constraints: Optional[Dict[str, Any]] = None,
+    verbose: bool = False,
+):
+    """
+    Build and configure an erddapy ``ERDDAP`` server for a griddap dataset.
+
+    This is the single, shared code path used by ``_get_griddap_dataset_url``,
+    ``load_layer`` and ``_layer_info`` so that the (somewhat fragile) handling
+    of erddapy's private ``_constraints_original`` lives in exactly one place.
+
+    Args:
+        dataset_id (str): The ID of the dataset.
+        variables (container of str, optional): Variable names to select. If None, all are kept.
+        constraints (dict[str, Any], optional): Constraints to apply on top of the dataset defaults.
+        verbose (bool, optional): If True, print selection details.
+
+    Returns:
+        erddapy.ERDDAP: A configured server instance with ``protocol='griddap'``.
+    """
+    server = deepcopy(default_server)
+    server.dataset_id = dataset_id
+    server.protocol = "griddap"
+    server.griddap_initialize()
+
+    verbose_print(f"Selected '{dataset_id}' dataset.", verbose)
+    verbose_print(f"Dataset info available at: {server.get_info_url()}", verbose)
+
+    # Setting constraints that match. erddapy exposes ``_constraints_original``;
+    # we merge user constraints on top of the dataset's full-range defaults.
+    if constraints:
+        original = getattr(server, "_constraints_original", None) or dict(
+            server.constraints
+        )
+        merged = {**original, **constraints}
+        for k, v in merged.items():
+            if k in server.constraints.keys():
+                server.constraints[k] = v
+                if hasattr(server, "_constraints_original"):
+                    server._constraints_original[k] = v
+
+    # The same for variables
+    if variables:
+        server.variables = [v for v in server.variables if v in variables]
+    verbose_print(
+        f"Selected {len(server.variables)} variables: {server.variables}.", verbose
+    )
+    return server
+
+
 def _get_griddap_dataset_url(
     dataset_id: str,
     variables: Optional[Container[str]] = None,
@@ -149,36 +232,147 @@ def _get_griddap_dataset_url(
     Returns:
         str: The URL for downloading the dataset.
 
-    Note:
-        This function prepares the necessary information to generate a Griddap download URL based on the provided parameters.
-
     Example:
         url = _get_griddap_dataset_url("dataset123", variables=["temperature", "salinity"], constraints={"time": "2023-01-01"}, response="csv", verbose=True)
     """
-    server = deepcopy(default_server)
-    server.dataset_id = dataset_id
-    server.protocol = "griddap"
-    server.griddap_initialize()
+    server = _build_griddap_server(dataset_id, variables, constraints, verbose)
+    return server.get_download_url(response=response)
 
-    verbose_print(f"Selected '{dataset_id}' dataset.", verbose)
-    verbose_print(f"Dataset info available at: {server.get_info_url()}", verbose)
 
-    # Setting constraints that match
-    if constraints:
-        constraints = {**server._constraints_original, **constraints}
-        for k, v in constraints.items():
-            if k in server.constraints.keys():
-                server.constraints[k] = v
-                server._constraints_original[k] = v
+# Dimensions handled by ``build_constraints`` and reported by ``_layer_info``.
+_DIMENSIONS = ("time", "latitude", "longitude", "depth")
 
-    # The same for variables
-    if variables:
-        server.variables = [v for v in server.variables if v in variables]
-    verbose_print(
-        f"Selected {len(server.variables)} variables: {server.variables}.", verbose
-    )
-    url = server.get_download_url(response=response)
-    return url
+
+@lru_cache(maxsize=32)
+def _layer_info(dataset_id: str) -> Dict[str, Any]:
+    """
+    Fetch structured metadata for a single griddap layer.
+
+    Args:
+        dataset_id (str): The dataset ID.
+
+    Returns:
+        dict: A dictionary with keys:
+            - ``dataset_id``
+            - ``dimensions``: mapping dim name -> (min, max) for time/latitude/longitude/depth
+            - ``variables``: mapping variable name -> {"units", "long_name"}
+            - ``griddap_constraints``: the dataset's full-range constraints dict
+    """
+    server = _build_griddap_server(dataset_id)
+
+    dimensions: Dict[str, Tuple[Any, Any]] = {}
+    for dim in _DIMENSIONS:
+        lo = server.constraints.get(f"{dim}>=")
+        hi = server.constraints.get(f"{dim}<=")
+        if lo is not None or hi is not None:
+            dimensions[dim] = (lo, hi)
+
+    variables: Dict[str, Dict[str, Optional[str]]] = {}
+    try:
+        info = pd.read_csv(server.get_info_url(response="csv"))
+        attrs = info[info["Row Type"] == "attribute"]
+        for var in server.variables:
+            sub = attrs[attrs["Variable Name"] == var]
+            units = sub.loc[sub["Attribute Name"] == "units", "Value"]
+            long_name = sub.loc[sub["Attribute Name"] == "long_name", "Value"]
+            variables[var] = {
+                "units": units.iloc[0] if not units.empty else None,
+                "long_name": long_name.iloc[0] if not long_name.empty else None,
+            }
+    except Exception:
+        # Metadata is best-effort; fall back to bare variable names.
+        for var in server.variables:
+            variables[var] = {"units": None, "long_name": None}
+
+    return {
+        "dataset_id": dataset_id,
+        "dimensions": dimensions,
+        "variables": variables,
+        "griddap_constraints": dict(server.constraints),
+    }
+
+
+def build_constraints(
+    dataset_id: Optional[str] = None,
+    time: Optional[Tuple[Any, Any]] = None,
+    latitude: Optional[Tuple[float, float]] = None,
+    longitude: Optional[Tuple[float, float]] = None,
+    depth: Optional[Tuple[float, float]] = None,
+    time_step: int = 1,
+    latitude_step: int = 1,
+    longitude_step: int = 1,
+    depth_step: int = 1,
+    validate: bool = True,
+) -> Dict[str, Any]:
+    """
+    Build a griddap constraints dictionary from human-friendly bounds.
+
+    Instead of hand-writing the ``{"time>=": ..., "time<=": ..., "time_step": ...}``
+    dictionary, pass ``(min, max)`` tuples per dimension and optional strides.
+
+    Args:
+        dataset_id (str, optional): If given and ``validate`` is True, bounds are
+            checked against the dataset's real dimension ranges and a warning is
+            emitted (not an error) when they fall outside.
+        time (tuple, optional): ``(start, end)`` as ISO strings, e.g. ("2000-01-01T00:00:00Z", "2010-01-01T00:00:00Z").
+        latitude (tuple, optional): ``(min, max)`` latitude in degrees.
+        longitude (tuple, optional): ``(min, max)`` longitude in degrees.
+        depth (tuple, optional): ``(min, max)`` depth.
+        time_step (int): Stride along time. Default 1.
+        latitude_step (int): Stride along latitude. Default 1.
+        longitude_step (int): Stride along longitude. Default 1.
+        depth_step (int): Stride along depth. Default 1.
+        validate (bool): If True and ``dataset_id`` is given, validate bounds.
+
+    Returns:
+        dict: A constraints dictionary suitable for ``download_layers`` / ``load_layer``.
+
+    Example:
+        constraints = build_constraints(
+            time=("2000-01-01T00:00:00Z", "2010-01-01T00:00:00Z"),
+            latitude=(0, 10),
+            longitude=(0, 10),
+        )
+    """
+    bounds = {
+        "time": (time, time_step),
+        "latitude": (latitude, latitude_step),
+        "longitude": (longitude, longitude_step),
+        "depth": (depth, depth_step),
+    }
+
+    real_ranges: Dict[str, Tuple[Any, Any]] = {}
+    if validate and dataset_id is not None:
+        try:
+            real_ranges = _layer_info(dataset_id)["dimensions"]
+        except Exception as exc:  # network/validation is best-effort
+            warnings.warn(
+                f"Could not fetch ranges for '{dataset_id}' to validate constraints: {exc}"
+            )
+
+    constraints: Dict[str, Any] = {}
+    for dim, (value, step) in bounds.items():
+        if value is None:
+            continue
+        lo, hi = value
+        constraints[f"{dim}>="] = lo
+        constraints[f"{dim}<="] = hi
+        constraints[f"{dim}_step"] = step
+
+        if dim in real_ranges:
+            rlo, rhi = real_ranges[dim]
+            # Numeric dimensions only; skip time string comparisons.
+            if dim != "time" and None not in (rlo, rhi):
+                try:
+                    if lo < rlo or hi > rhi:
+                        warnings.warn(
+                            f"Requested {dim} range ({lo}, {hi}) is outside the "
+                            f"dataset range ({rlo}, {rhi}) for '{dataset_id}'."
+                        )
+                except TypeError:
+                    pass
+
+    return constraints
 
 
 @lru_cache(2)
@@ -212,6 +406,7 @@ def _download_layer(
     log: bool = True,
     timestamp: bool = True,
     timeout: int = 120,
+    variables: Optional[Container[str]] = None,
     **httpx_kwargs,
 ) -> None:
     """
@@ -245,7 +440,7 @@ def _download_layer(
 
     # Check for existing layers
     if skip_confirmation is None:
-        skip_confirmation = eval(config["skip_confirmation"])
+        skip_confirmation = _as_bool(config["skip_confirmation"])
     if not skip_confirmation:
         print()
         print(f"Data directory is '{outdir}'.", end="\n\n")
@@ -291,7 +486,7 @@ def _download_layer(
     verbose_print(constraints, verbose)
 
     url = _get_griddap_dataset_url(
-        dataset_id, constraints=constraints, response=response
+        dataset_id, variables=variables, constraints=constraints, response=response
     )
     _download_file_from_url(url, local_path, timeout=timeout, **httpx_kwargs)
     if (verbose or log) and local_path.exists():

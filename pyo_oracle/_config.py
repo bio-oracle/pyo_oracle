@@ -47,9 +47,9 @@ def _get_default_config() -> configparser.ConfigParser:
             print("Config file doesn't exist, creating it.")
             create_config()
             return _get_default_config()
-        except Exception as e:
+        except Exception:
             print(
-                f"Error: could not load or create configuration file. Loading default values."
+                "Error: could not load or create configuration file. Loading default values."
             )
             config = configparser.ConfigParser()
             config["DEFAULT"] = _default_config
