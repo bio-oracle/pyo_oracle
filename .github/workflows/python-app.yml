@@ -46,10 +46,9 @@ jobs:
         path: htmlcov/
 
   integration:
-    # Tests that hit the live Bio-ORACLE ERDDAP server. Allowed to fail so a
-    # server hiccup doesn't block CI.
+    # Tests that hit the live Bio-ORACLE ERDDAP server. Blocking: a failure here
+    # gates the PR.
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
