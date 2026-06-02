@@ -18,6 +18,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   validation, and download flows are now covered without hitting the server.
 - CI enforces a minimum coverage of 90% on the offline test run.
 
+### Documentation
+
+- Added a dedicated "The constraints dictionary" page documenting the dictionary
+  structure (keys, value types, strides), how to edit it manually, partial
+  constraints, and what happens when no constraints are given.
+
 ## [1.0.0] - 2026-06-02
 
 First stable release. Modernizes dependencies, reaches feature parity with the

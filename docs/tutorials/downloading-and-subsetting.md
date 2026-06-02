@@ -52,6 +52,10 @@ constraints = {
 `*_step` arguments take every *n*-th grid cell along a dimension — a quick way
 to downsample a large region.
 
+For the full anatomy of this dictionary — every key, value types, partial
+constraints, and how to edit it by hand — see
+[The constraints dictionary](../constraints.md).
+
 ## Restrict variables
 
 Most layers ship several statistics (`_mean`, `_min`, `_max`, `_range`, ...).
@@ -80,4 +84,5 @@ pyo.list_local_data()
 !!! warning
     Calling `download_layers` without constraints downloads the **entire global
     layer**. `pyo_oracle` will ask for confirmation first; pass
-    `skip_confirmation=True` to bypass the prompt in scripts.
+    `skip_confirmation=True` to bypass the prompt in scripts. See
+    [What happens if you don't specify constraints](../constraints.md#what-happens-if-you-dont-specify-constraints).
