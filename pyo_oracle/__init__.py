@@ -1,4 +1,11 @@
-from .main import download_layers, list_layers, list_local_data
+from .main import (
+    build_constraints,
+    download_layers,
+    info_layer,
+    list_layers,
+    list_local_data,
+    load_layer,
+)
 from . import _config as config_module
 
 # Re-export helpers so users can call pyo.create_config(), etc.
@@ -13,6 +20,9 @@ __all__ = [
     "download_layers",
     "list_layers",
     "list_local_data",
+    "info_layer",
+    "load_layer",
+    "build_constraints",
     "config",
     "create_config",
     "get_config_path",

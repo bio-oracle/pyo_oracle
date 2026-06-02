@@ -23,14 +23,27 @@ import pandas as pd
 
 from pyo_oracle._config import config
 from pyo_oracle.utils import (
+    _as_bool,
+    _build_griddap_server,
     _download_layer,
     _ensure_hashable,
     _layer_dataframe,
+    _layer_info,
     _validate_argument,
+    build_constraints,
     confirm,
     convert_bytes,
     verbose_print,
 )
+
+__all__ = [
+    "download_layers",
+    "list_layers",
+    "list_local_data",
+    "info_layer",
+    "load_layer",
+    "build_constraints",
+]
 
 # Literal typing for type checking and validation (using _validate_argument)
 Variable = Literal[
@@ -63,6 +76,7 @@ def download_layers(
     output_directory: Optional[Union[str, Path]] = None,
     response: str = "nc",
     constraints: Optional[Dict[str, Any]] = None,
+    variables: Optional[Iterable[str]] = None,
     skip_confirmation: Optional[bool] = None,
     verbose: bool = True,
     log: bool = True,
@@ -78,7 +92,8 @@ def download_layers(
         dataset_ids (str or list): Dataset ID(s) to download. A single dataset ID or a list of IDs.
         output_directory (str or Path, optional): Directory where downloaded files will be saved. If not provided, the default directory will be used.
         response (str, optional): Format of the response to download. Default is 'nc'.
-        constraints (dict, optional): Constraints to apply to the downloaded data.
+        constraints (dict, optional): Constraints to apply to the downloaded data. See ``build_constraints`` for a convenient way to build this dictionary.
+        variables (list, optional): Subset of variables to download. If not provided, all variables in the dataset are downloaded.
         skip_confirmation (bool, optional): If True, confirmation prompts will be skipped. If None, the value from the configuration will be used.
         verbose (bool, optional): If True, detailed information will be printed during the download process.
         log (bool, optional): If True, a log of the download will be created.
@@ -97,14 +112,20 @@ def download_layers(
         # Download a single dataset with default settings
         download_layers(dataset_ids="dataset123")
 
-        # Download multiple datasets with custom settings
-        download_layers(dataset_ids=["dataset456", "dataset789"], output_directory="/path/to/output", response="csv", verbose=False)
+        # Download multiple datasets with custom settings, restricting to two variables
+        download_layers(
+            dataset_ids=["dataset456", "dataset789"],
+            output_directory="/path/to/output",
+            response="csv",
+            variables=["thetao_mean"],
+            verbose=False,
+        )
     """
     if isinstance(dataset_ids, str):
         dataset_ids = (dataset_ids,)
 
     if skip_confirmation is None:
-        skip_confirmation = eval(config["skip_confirmation"])
+        skip_confirmation = _as_bool(config["skip_confirmation"])
 
     if not skip_confirmation and not constraints:
         question = "No constraints have been set. This will download the full dataset, which may be a few GBs in size."
@@ -126,6 +147,7 @@ def download_layers(
             log,
             timestamp,
             timeout,
+            variables=variables,
             **httpx_kwargs,
         )
 
@@ -303,7 +325,9 @@ def _list_layers(
         return _dataframe["datasetID"].to_list()
 
 
-def list_local_data(data_directory: Optional[Union[str, Path]] = None, verbose: bool = True):
+def list_local_data(
+    data_directory: Optional[Union[str, Path]] = None, verbose: bool = True
+) -> None:
     """
     Lists datasets that are locally downloaded.
 
@@ -344,3 +368,89 @@ def list_local_data(data_directory: Optional[Union[str, Path]] = None, verbose: 
         dirsize = sum(Path(f).stat().st_size for f in files)
         dirsize = convert_bytes(dirsize)
         verbose_print(f"Size of data directory is {dirsize}.", verbose)
+
+
+def info_layer(dataset_id: str, verbose: bool = True) -> Dict[str, Any]:
+    """
+    Returns metadata about a single layer (dataset).
+
+    Mirrors ``biooracler::info_layer``: reports the dimension ranges
+    (time, latitude, longitude, and depth when present) and the available
+    variables together with their units and long names.
+
+    Args:
+        dataset_id (str): The dataset ID to inspect, e.g. "thetao_baseline_2000_2019_depthsurf".
+        verbose (bool): If True (default), pretty-print the metadata as well as returning it.
+
+    Returns:
+        dict: A dictionary with keys ``dataset_id``, ``dimensions``
+        (mapping dim name -> (min, max)), ``variables`` (mapping variable name ->
+        {"units", "long_name"}) and ``griddap_constraints`` (the full-range
+        constraints dict accepted by ``download_layers`` / ``load_layer``).
+
+    Example:
+        info = info_layer("thetao_baseline_2000_2019_depthsurf")
+    """
+    info = _layer_info(dataset_id)
+
+    if verbose:
+        print(f"Dataset ID: {info['dataset_id']}\n")
+        print("Dimensions:")
+        for dim, (lo, hi) in info["dimensions"].items():
+            print(f"\t{dim}: {lo} to {hi}")
+        print("\nVariables:")
+        for var, meta in info["variables"].items():
+            units = meta.get("units")
+            long_name = meta.get("long_name")
+            label = long_name or var
+            unit_str = f" [{units}]" if units else ""
+            print(f"\t{var}: {label}{unit_str}")
+        print()
+
+    return info
+
+
+def load_layer(
+    dataset_id: str,
+    constraints: Optional[Dict[str, Any]] = None,
+    variables: Optional[Iterable[str]] = None,
+    fmt: Literal["pandas", "xarray"] = "pandas",
+    verbose: bool = False,
+) -> Any:
+    """
+    Loads a layer directly into memory instead of writing it to a file.
+
+    This is the in-memory counterpart of ``download_layers`` and mirrors
+    ``biooracler::download_layers`` returning data into the session.
+
+    Args:
+        dataset_id (str): The dataset ID to load.
+        constraints (dict, optional): Constraints to apply. See ``build_constraints``.
+        variables (list, optional): Subset of variables to load. If None, all are loaded.
+        fmt (str): "pandas" (default) returns a ``pandas.DataFrame``; "xarray" returns
+            an ``xarray.Dataset`` (requires the optional ``xarray`` extra:
+            ``pip install pyo_oracle[xarray]``).
+        verbose (bool): If True, print selection details.
+
+    Returns:
+        pandas.DataFrame or xarray.Dataset: The requested data.
+
+    Example:
+        df = load_layer("thetao_baseline_2000_2019_depthsurf", constraints=constraints)
+        ds = load_layer("thetao_baseline_2000_2019_depthsurf", fmt="xarray")
+    """
+    if fmt not in ("pandas", "xarray"):
+        raise ValueError(f"Unsupported fmt '{fmt}'. Use 'pandas' or 'xarray'.")
+
+    server = _build_griddap_server(dataset_id, variables, constraints, verbose)
+
+    if fmt == "pandas":
+        return server.to_pandas()
+
+    try:
+        return server.to_xarray()
+    except ImportError as exc:  # pragma: no cover - exercised via install state
+        raise ImportError(
+            "Loading layers as xarray requires the optional dependencies. "
+            "Install them with: pip install pyo_oracle[xarray]"
+        ) from exc

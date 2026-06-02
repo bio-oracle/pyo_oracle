@@ -1,0 +1,56 @@
+site_name: pyo_oracle
+site_description: Python client for the Bio-ORACLE ERDDAP server
+site_url: https://bio-oracle.github.io/pyo_oracle/
+repo_url: https://github.com/bio-oracle/pyo_oracle
+repo_name: bio-oracle/pyo_oracle
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.suggest
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Tutorials:
+      - Listing and filtering: tutorials/listing-and-filtering.md
+      - Downloading and subsetting: tutorials/downloading-and-subsetting.md
+      - Working with xarray: tutorials/xarray-and-plotting.md
+  - API reference: api.md

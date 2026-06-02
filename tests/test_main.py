@@ -35,6 +35,7 @@ def layer():
     return layer
 
 
+@pytest.mark.integration
 class TestListLayers:
     """Tests for the `pyo.list_layers` function with various filters."""
 
@@ -102,6 +103,7 @@ class TestListLayers:
         assert df1 is df3
 
 
+@pytest.mark.integration
 def test_download_layers(layer, constraints, test_data_dir):
     pyo.download_layers(
         layer,
@@ -112,6 +114,24 @@ def test_download_layers(layer, constraints, test_data_dir):
     )
 
 
+@pytest.mark.integration
+def test_download_layers_variables(layer, constraints, tmp_path):
+    """Downloading with a `variables` subset should produce a file with only that column."""
+    pyo.download_layers(
+        layer,
+        output_directory=tmp_path,
+        response="csv",
+        constraints=constraints,
+        variables=["thetao_mean"],
+        skip_confirmation=True,
+    )
+    files = list(Path(tmp_path).glob(f"{layer}*.csv"))
+    assert len(files) == 1
+    header = files[0].read_text().splitlines()[0]
+    assert "thetao_mean" in header
+    assert "thetao_max" not in header
+
+
 def test_list_local_data(test_data_dir):
     pyo.list_local_data(
         test_data_dir,
@@ -119,6 +139,63 @@ def test_list_local_data(test_data_dir):
     pyo.list_local_data(test_data_dir, verbose=True)
 
 
+@pytest.mark.integration
+class TestInfoLayer:
+    def test_info_layer_structure(self, layer):
+        info = pyo.info_layer(layer, verbose=False)
+        assert info["dataset_id"] == layer
+        assert "latitude" in info["dimensions"]
+        assert "longitude" in info["dimensions"]
+        assert "thetao_mean" in info["variables"]
+        assert info["variables"]["thetao_mean"]["units"] == "degree_C"
+
+    def test_info_layer_prints(self, layer, capsys):
+        pyo.info_layer(layer, verbose=True)
+        out = capsys.readouterr().out
+        assert "Dimensions:" in out
+        assert "Variables:" in out
+
+
+@pytest.mark.integration
+class TestLoadLayer:
+    @pytest.fixture
+    def small_constraints(self, layer):
+        return pyo.build_constraints(
+            layer,
+            latitude=(0, 5),
+            longitude=(0, 5),
+            latitude_step=50,
+            longitude_step=50,
+        )
+
+    def test_load_layer_pandas(self, layer, small_constraints):
+        df = pyo.load_layer(
+            layer, constraints=small_constraints, variables=["thetao_mean"]
+        )
+        assert isinstance(df, pd.DataFrame)
+        assert not df.empty
+        assert any("thetao_mean" in c for c in df.columns)
+
+    def test_load_layer_xarray(self, layer, small_constraints):
+        xr = pytest.importorskip("xarray")
+        ds = pyo.load_layer(
+            layer, constraints=small_constraints, variables=["thetao_mean"], fmt="xarray"
+        )
+        assert isinstance(ds, xr.Dataset)
+        assert "thetao_mean" in ds.data_vars
+
+    def test_load_layer_bad_fmt(self, layer):
+        with pytest.raises(ValueError):
+            pyo.load_layer(layer, fmt="bogus")
+
+
+@pytest.mark.integration
+def test_build_constraints_out_of_range_warns(layer):
+    with pytest.warns(UserWarning):
+        pyo.build_constraints(layer, latitude=(-200, 200))
+
+
+@pytest.mark.integration
 def test_manual_erddapy_requests(layer, constraints, test_data_dir):
     e = ERDDAP(server=pyo.config["erddap_server"], protocol="griddap")
     e.dataset_id = layer

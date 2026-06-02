@@ -5,21 +5,51 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["pyo_oracle"]
 
+[tool.setuptools.package-data]
+pyo_oracle = ["config.ini", "data/.gitkeep"]
+
 [project]
 name = "pyo_oracle"
-version = "0.1.0"
+version = "1.0.0"
 authors = [
   { name="Vini Salazar", email="vinicius.salazar@unimelb.edu.au" },
 ]
 description = "Python client for the Bio-ORACLE ERDDAP server."
 readme = "README.md"
-requires-python = ">=3.7"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["bio-oracle", "erddap", "oceanography", "marine", "climate", "sdm"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Oceanography",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["erddapy",]
+dependencies = [
+    "erddapy>=2.2",
+    "pandas>=2.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+xarray = ["xarray>=2023.1.0", "netCDF4>=1.6"]
+docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.24", "mkdocs-jupyter>=0.24"]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "respx>=0.21", "flake8>=6.0", "ruff>=0.4"]
 
 [project.urls]
 "Homepage" = "https://github.com/bio-oracle/pyo_oracle"
+"Documentation" = "https://bio-oracle.github.io/pyo_oracle/"
+"Bug Tracker" = "https://github.com/bio-oracle/pyo_oracle/issues"
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: tests that hit the live Bio-ORACLE ERDDAP server (deselect with -m 'not integration')",
+]
