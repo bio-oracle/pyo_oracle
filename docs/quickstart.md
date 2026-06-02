@@ -48,6 +48,10 @@ constraints = pyo.build_constraints(
 When the `dataset_id` is supplied, requested bounds are checked against the
 dataset's real ranges and a warning is emitted if they fall outside.
 
+`build_constraints` just returns a plain dictionary, which you can also write or
+edit by hand. For its full structure — and what happens when you pass no
+constraints — see [The constraints dictionary](constraints.md).
+
 ## 4. Load into memory or download to disk
 
 ```python
