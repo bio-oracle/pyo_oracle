@@ -1,6 +1,7 @@
 from .main import (
     build_constraints,
     download_layers,
+    get_layer_url,
     info_layer,
     list_layers,
     list_local_data,
@@ -23,6 +24,7 @@ __all__ = [
     "info_layer",
     "load_layer",
     "build_constraints",
+    "get_layer_url",
     "config",
     "create_config",
     "get_config_path",

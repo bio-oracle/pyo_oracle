@@ -4,6 +4,14 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - Unreleased
+
+### Added
+
+- **`get_layer_url(dataset_id, ...)`** — build the ERDDAP download URL for a
+  layer (with constraints, variable subset, and response format) without
+  downloading it, for sharing or fetching elsewhere. Resolves #1.
+
 ## [1.0.0] - 2026-06-02
 
 First stable release. Modernizes dependencies, reaches feature parity with the

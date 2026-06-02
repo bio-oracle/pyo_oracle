@@ -19,6 +19,8 @@ namespace, e.g. `pyo_oracle.list_layers(...)`.
 
 ::: pyo_oracle.download_layers
 
+::: pyo_oracle.get_layer_url
+
 ::: pyo_oracle.list_local_data
 
 ## Configuration
