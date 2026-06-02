@@ -66,3 +66,35 @@ def test_print_config_values_outputs_defaults(temp_config_path, capsys):
     assert str(temp_config_path) in output
     for key in ("data_directory", "erddap_server", "skip_confirmation"):
         assert key in output
+
+
+def test_print_config_values_creates_missing_file(temp_config_path, capsys):
+    # File does not exist yet -> the function should create it first.
+    assert not temp_config_path.exists()
+
+    config_module.print_config_values()
+
+    assert temp_config_path.exists()
+    assert "Config file doesn't exist, creating it." in capsys.readouterr().out
+
+
+def test_get_default_config_creates_missing_file(temp_config_path):
+    assert not temp_config_path.exists()
+
+    parser = config_module._get_default_config()
+
+    assert temp_config_path.exists()
+    assert parser["DEFAULT"]["erddap_server"] == config_module._default_config["erddap_server"]
+
+
+def test_get_default_config_falls_back_on_error(temp_config_path, monkeypatch, capsys):
+    # Creation fails -> fall back to in-memory defaults without raising.
+    def boom(*_args, **_kwargs):
+        raise OSError("cannot write")
+
+    monkeypatch.setattr(config_module, "create_config", boom)
+
+    parser = config_module._get_default_config()
+
+    assert parser["DEFAULT"]["erddap_server"] == config_module._default_config["erddap_server"]
+    assert "could not load or create" in capsys.readouterr().out

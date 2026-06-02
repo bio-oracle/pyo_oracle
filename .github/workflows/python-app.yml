@@ -37,7 +37,8 @@ jobs:
     - name: Test with coverage (unit tests only)
       run: |
         python -m pytest -m "not integration" \
-          --cov=pyo_oracle --cov-report=html --cov-report=term-missing tests/
+          --cov=pyo_oracle --cov-report=html --cov-report=term-missing \
+          --cov-fail-under=90 tests/
     - name: Upload coverage report
       if: matrix.python-version == '3.12'
       uses: actions/upload-artifact@v4
