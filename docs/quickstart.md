@@ -73,6 +73,18 @@ pyo.download_layers(
 )
 ```
 
+Prefer just the request URL (to share, email, or fetch elsewhere)? Use
+[`get_layer_url`][pyo_oracle.get_layer_url]:
+
+```python
+url = pyo.get_layer_url(
+    "thetao_baseline_2000_2019_depthsurf",
+    constraints=constraints,
+    variables=["thetao_mean"],
+    response="nc",
+)
+```
+
 ## 5. Manage local data
 
 ```python

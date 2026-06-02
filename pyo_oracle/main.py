@@ -27,6 +27,7 @@ from pyo_oracle.utils import (
     _build_griddap_server,
     _download_layer,
     _ensure_hashable,
+    _get_griddap_dataset_url,
     _layer_dataframe,
     _layer_info,
     _validate_argument,
@@ -43,6 +44,7 @@ __all__ = [
     "info_layer",
     "load_layer",
     "build_constraints",
+    "get_layer_url",
 ]
 
 # Literal typing for type checking and validation (using _validate_argument)
@@ -454,3 +456,45 @@ def load_layer(
             "Loading layers as xarray requires the optional dependencies. "
             "Install them with: pip install pyo_oracle[xarray]"
         ) from exc
+
+
+def get_layer_url(
+    dataset_id: str,
+    constraints: Optional[Dict[str, Any]] = None,
+    variables: Optional[Iterable[str]] = None,
+    response: str = "nc",
+    verbose: bool = False,
+) -> str:
+    """
+    Builds the ERDDAP download URL for a layer without downloading it.
+
+    Useful for sharing a request (e.g. by email), inspecting it, or fetching it
+    with another tool. The URL encodes the dataset, the selected variables, the
+    constraints, and the response format.
+
+    Args:
+        dataset_id (str): The dataset ID.
+        constraints (dict, optional): Constraints to apply. See ``build_constraints``.
+        variables (list, optional): Subset of variables to include. If None, all are included.
+        response (str): Response/file format, e.g. "nc" (default), "csv", "geotif".
+            Note that some formats such as "geotif" require selecting a single variable.
+        verbose (bool): If True, print selection details.
+
+    Returns:
+        str: The fully-formed ERDDAP griddap download URL.
+
+    Example:
+        url = get_layer_url(
+            "thetao_baseline_2000_2019_depthsurf",
+            constraints=constraints,
+            variables=["thetao_mean"],
+            response="nc",
+        )
+    """
+    return _get_griddap_dataset_url(
+        dataset_id,
+        variables=variables,
+        constraints=constraints,
+        response=response,
+        verbose=verbose,
+    )

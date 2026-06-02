@@ -6,8 +6,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.1.0] - Unreleased
 
-### Tests
+### Added
 
+- **`get_layer_url(dataset_id, ...)`** — build the ERDDAP download URL for a
+  layer (with constraints, variable subset, and response format) without
+  downloading it, for sharing or fetching elsewhere. Resolves #1.
 - Greatly expanded the test suite with offline unit tests that mock the network
   boundary (`_build_griddap_server`, `_layer_info`, `_download_file_from_url`,
   `_layer_dataframe`). Total coverage rose from 85% to ~99%, and the

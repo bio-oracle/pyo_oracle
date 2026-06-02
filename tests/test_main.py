@@ -196,6 +196,15 @@ def test_build_constraints_out_of_range_warns(layer):
 
 
 @pytest.mark.integration
+def test_get_layer_url(layer, constraints):
+    url = pyo.get_layer_url(layer, constraints=constraints, variables=["thetao_mean"])
+    assert url.startswith("http")
+    assert f"griddap/{layer}" in url
+    assert "thetao_mean" in url
+    assert "thetao_max" not in url
+
+
+@pytest.mark.integration
 def test_manual_erddapy_requests(layer, constraints, test_data_dir):
     e = ERDDAP(server=pyo.config["erddap_server"], protocol="griddap")
     e.dataset_id = layer
