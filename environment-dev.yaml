@@ -1,9 +1,21 @@
-name: pyo-oracle-dev
+name: pyo_oracle
 channels:
   - conda-forge
 dependencies:
+  - python>=3.9
   - erddapy
+  - pandas>=2.0
   - httpx
+  - xarray
+  - netCDF4
   - ipython
   - pytest
   - pytest-cov
+  - respx
+  - flake8
+  - ruff
+  - pip
+  - pip:
+      - mkdocs-material
+      - "mkdocstrings[python]"
+      - mkdocs-jupyter
