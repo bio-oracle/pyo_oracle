@@ -8,6 +8,10 @@ dependencies:
   - httpx
   - xarray
   - netCDF4
+  - matplotlib-base
+  - cartopy
+  - cmocean
+  - seaborn
   - ipython
   - pytest
   - pytest-cov

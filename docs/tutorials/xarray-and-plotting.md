@@ -62,3 +62,8 @@ distribution modelling), use the default `fmt="pandas"`:
 df = pyo.load_layer(ds_id, constraints=constraints, variables=["thetao_mean"])
 df.head()
 ```
+
+!!! tip "More examples"
+    The [Gallery](../gallery/index.md) collects richer, ready-to-run
+    visualisations — global maps and projections, climate-change deltas,
+    distributions, and multi-variable relationships.

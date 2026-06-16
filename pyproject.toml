@@ -41,6 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 xarray = ["xarray>=2023.1.0", "netCDF4>=1.6"]
+viz = ["pyo-oracle[xarray]", "matplotlib>=3.7", "cmocean>=3.0", "cartopy>=0.22", "seaborn>=0.12"]
 docs = ["mkdocs-material>=9.5", "mkdocstrings[python]>=0.24", "mkdocs-jupyter>=0.24"]
 dev = ["pytest>=7.0", "pytest-cov>=4.0", "respx>=0.21", "flake8>=6.0", "ruff>=0.4"]
 

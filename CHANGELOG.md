@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Documentation **Gallery**: four visualisation tutorials (global maps &
+  projections, climate change, distributions & gradients, multi-variable
+  relationships) built on the xarray/pandas plotting APIs with cmocean and
+  cartopy. Figures are pre-rendered by `docs/gallery/generate_images.py` so the
+  docs build stays offline.
+- **`viz` optional dependency extra** (`matplotlib`, `cmocean`, `cartopy`,
+  `seaborn`) for running the Gallery examples.
+
 ## [1.0.0] - 2026-06-02
 
 First stable release. Modernizes dependencies, reaches feature parity with the
