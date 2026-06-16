@@ -53,4 +53,5 @@ df = pyo.load_layer(
 )
 ```
 
-See the [Quickstart](quickstart.md) and [Tutorials](tutorials/listing-and-filtering.md) to go further.
+See the [Quickstart](quickstart.md) and [Tutorials](tutorials/listing-and-filtering.md)
+to go further, or browse the [Gallery](gallery/index.md) for visualisation recipes.

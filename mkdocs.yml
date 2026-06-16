@@ -40,6 +40,8 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - attr_list
+  - md_in_html
   - pymdownx.highlight
   - pymdownx.superfences
   - pymdownx.details
@@ -53,4 +55,10 @@ nav:
       - Listing and filtering: tutorials/listing-and-filtering.md
       - Downloading and subsetting: tutorials/downloading-and-subsetting.md
       - Working with xarray: tutorials/xarray-and-plotting.md
+  - Gallery:
+      - Overview: gallery/index.md
+      - Global maps & projections: gallery/global-maps.md
+      - Climate change: gallery/climate-change.md
+      - Distributions & gradients: gallery/distributions.md
+      - Multi-variable relationships: gallery/multivariable.md
   - API reference: api.md
